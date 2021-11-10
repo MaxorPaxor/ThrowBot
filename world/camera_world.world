@@ -1,0 +1,1518 @@
+<sdf version='1.6'>
+  <world name='default'>
+    <light name='sun' type='directional'>
+      <cast_shadows>1</cast_shadows>
+      <pose frame=''>0 0 10 0 -0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+    <model name='ground_plane'>
+      <static>1</static>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <surface>
+            <contact>
+              <collide_bitmask>65535</collide_bitmask>
+              <ode/>
+            </contact>
+            <friction>
+              <ode>
+                <mu>100</mu>
+                <mu2>50</mu2>
+              </ode>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='visual'>
+          <cast_shadows>0</cast_shadows>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <gravity>0 0 -9.8</gravity>
+    <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
+    <atmosphere type='adiabatic'/>
+    <physics name='default_physics' default='0' type='ode'>
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate>
+    </physics>
+    <scene>
+      <ambient>0.4 0.4 0.4 1</ambient>
+      <background>0.7 0.7 0.7 1</background>
+      <shadows>1</shadows>
+    </scene>
+    <audio>
+      <device>default</device>
+    </audio>
+    <wind/>
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <latitude_deg>0</latitude_deg>
+      <longitude_deg>0</longitude_deg>
+      <elevation>0</elevation>
+      <heading_deg>0</heading_deg>
+    </spherical_coordinates>
+    <model name='table'>
+      <link name='table'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <mass>0.1</mass>
+          <inertia>
+            <ixx>0</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0</iyy>
+            <iyz>0</iyz>
+            <izz>0</izz>
+          </inertia>
+        </inertial>
+        <collision name='table_collision'>
+          <pose frame=''>0 0 0.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.5 0.5 0.5</size>
+            </box>
+          </geometry>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <friction>
+              <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <visual name='table_visual'>
+          <pose frame=''>0 0 0.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.5 1 0.9</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <name>Gazebo/Wood</name>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+            </script>
+          </material>
+        </visual>
+        <gravity>1</gravity>
+        <velocity_decay/>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <static>1</static>
+      <pose frame=''>0.7 0 0 0 -0 0</pose>
+    </model>
+    <model name='right_wall'>
+      <link name='right_wall'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose frame=''>0.1 0.5 0 0 -0 0</pose>
+          <mass>0.2</mass>
+          <inertia>
+            <ixx>0.05</ixx>
+            <ixy>-0.01</ixy>
+            <ixz>0</ixz>
+            <iyy>0.002</iyy>
+            <iyz>0</iyz>
+            <izz>0.052</izz>
+          </inertia>
+        </inertial>
+        <collision name='right_wall_collision'>
+          <pose frame=''>0 0 0.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 2 2.3</size>
+            </box>
+          </geometry>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <friction>
+              <ode/>
+              <torsional>
+                <ode/>
+              </torsional>
+            </friction>
+            <bounce/>
+          </surface>
+          <max_contacts>10</max_contacts>
+        </collision>
+        <collision name='right_wall_fixed_joint_lump__left_wall_collision_1'>
+          <pose frame=''>0.2 1 0.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.5 0.5 0.5</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='right_wall_visual'>
+          <pose frame=''>0 0 0.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 2 2.3</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <name>Gazebo/wigth</name>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+            </script>
+          </material>
+        </visual>
+        <visual name='right_wall_fixed_joint_lump__left_wall_visual_1'>
+          <pose frame=''>0.2 1 0.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.2 0.5 2.3</size>
+            </box>
+          </geometry>
+        </visual>
+        <gravity>1</gravity>
+        <velocity_decay/>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <static>1</static>
+      <pose frame=''>-1 0 0 0 -0 0</pose>
+    </model>
+    <model name='sda5'>
+      <link name='torso_base_link'>
+        <pose frame=''>0 0 1.2 0 -0 0</pose>
+        <inertial>
+          <pose frame=''>0.0508 -1e-05 0.33388 0 -0 0</pose>
+          <mass>68</mass>
+          <inertia>
+            <ixx>12.6458</ixx>
+            <ixy>-6.14e-05</ixy>
+            <ixz>1.69122</ixz>
+            <iyy>12.8886</iyy>
+            <iyz>6.68e-05</iyz>
+            <izz>1.28016</izz>
+          </inertia>
+        </inertial>
+        <collision name='torso_base_link_collision'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/collision/base.stl</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='torso_base_link_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/visual/base.stl</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <joint name='base_link_torso' type='fixed'>
+        <child>torso_base_link</child>
+        <parent>world</parent>
+      </joint>
+      <link name='torso_link_b1'>
+        <pose frame=''>0 0 1.2 0 -0 0</pose>
+        <inertial>
+          <pose frame=''>0.05378 3e-06 0.24362 0 -0 0</pose>
+          <mass>52</mass>
+          <inertia>
+            <ixx>4.13276</ixx>
+            <ixy>1.1e-05</ixy>
+            <ixz>0.943678</ixz>
+            <iyy>4.36693</iyy>
+            <iyz>3.9e-05</iyz>
+            <izz>0.6976</izz>
+          </inertia>
+        </inertial>
+        <collision name='torso_link_b1_collision'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/collision/link_b1.stl</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='torso_link_b1_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/visual/link_b1.stl</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <joint name='torso_joint_b1' type='revolute'>
+        <child>torso_link_b1</child>
+        <parent>torso_base_link</parent>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>-2.96706</lower>
+            <upper>2.96706</upper>
+            <effort>100</effort>
+            <velocity>2.26893</velocity>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+          <use_parent_model_frame>1</use_parent_model_frame>
+        </axis>
+      </joint>
+      <link name='arm_left_link_1_s'>
+        <pose frame=''>0.1 0.265 1.2 1.5708 -0 0</pose>
+        <inertial>
+          <pose frame=''>-0.000265 -0.022912 -0.263484 0 -0 0</pose>
+          <mass>10</mass>
+          <inertia>
+            <ixx>0.112042</ixx>
+            <ixy>-9.49e-06</ixy>
+            <ixz>5.84e-06</ixz>
+            <iyy>0.026163</iyy>
+            <iyz>-0.022776</iyz>
+            <izz>0.110175</izz>
+          </inertia>
+        </inertial>
+        <collision name='arm_left_link_1_s_collision'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/collision/link_s.stl</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='arm_left_link_1_s_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/visual/link_s.stl</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <joint name='arm_left_joint_1_s' type='revolute'>
+        <child>arm_left_link_1_s</child>
+        <parent>torso_link_b1</parent>
+        <axis>
+          <xyz>0 1 -0</xyz>
+          <limit>
+            <lower>-3.14159</lower>
+            <upper>3.14159</upper>
+            <effort>0</effort>
+            <velocity>2.96706</velocity>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+          <use_parent_model_frame>1</use_parent_model_frame>
+        </axis>
+      </joint>
+      <link name='arm_left_link_2_l'>
+        <pose frame=''>0.1 0.265 1.2 0 -0 0</pose>
+        <inertial>
+          <pose frame=''>0 0.079945 -0.009835 0 -0 0</pose>
+          <mass>8</mass>
+          <inertia>
+            <ixx>0.112042</ixx>
+            <ixy>-9.49e-06</ixy>
+            <ixz>5.84e-06</ixz>
+            <iyy>0.026163</iyy>
+            <iyz>-0.022776</iyz>
+            <izz>0.110175</izz>
+          </inertia>
+        </inertial>
+        <collision name='arm_left_link_2_l_collision'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/collision/link_l.stl</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='arm_left_link_2_l_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/visual/link_l.stl</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <joint name='arm_left_joint_2_l' type='revolute'>
+        <child>arm_left_link_2_l</child>
+        <parent>arm_left_link_1_s</parent>
+        <axis>
+          <xyz>0 0 -1</xyz>
+          <limit>
+            <lower>-1.91986</lower>
+            <upper>1.91986</upper>
+            <effort>0</effort>
+            <velocity>2.96706</velocity>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+          <use_parent_model_frame>1</use_parent_model_frame>
+        </axis>
+      </joint>
+      <link name='arm_left_link_3_e'>
+        <pose frame=''>0.1 0.625 1.2 1.5708 -0 0</pose>
+        <inertial>
+          <pose frame=''>0 0.018717 -0.119158 0 -0 0</pose>
+          <mass>7.5</mass>
+          <inertia>
+            <ixx>0.15655</ixx>
+            <ixy>-8.43e-06</ixy>
+            <ixz>4.35e-05</ixz>
+            <iyy>0.152788</iyy>
+            <iyz>-0.021001</iyz>
+            <izz>0.017946</izz>
+          </inertia>
+        </inertial>
+        <collision name='arm_left_link_3_e_collision'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/collision/link_e.stl</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='arm_left_link_3_e_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/visual/link_e.stl</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <joint name='arm_left_joint_3_e' type='revolute'>
+        <child>arm_left_link_3_e</child>
+        <parent>arm_left_link_2_l</parent>
+        <axis>
+          <xyz>0 1 -0</xyz>
+          <limit>
+            <lower>-2.96706</lower>
+            <upper>2.96706</upper>
+            <effort>0</effort>
+            <velocity>2.96706</velocity>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+          <use_parent_model_frame>1</use_parent_model_frame>
+        </axis>
+      </joint>
+      <link name='arm_left_link_4_u'>
+        <pose frame=''>0.1 0.625 1.2 0 -0 0</pose>
+        <inertial>
+          <pose frame=''>0 0.093003 -0.006433 0 -0 0</pose>
+          <mass>6</mass>
+          <inertia>
+            <ixx>0.092098</ixx>
+            <ixy>-4.04e-05</ixy>
+            <ixz>-3.81e-06</ixz>
+            <iyy>0.0103</iyy>
+            <iyz>0.004406</iyz>
+            <izz>0.091086</izz>
+          </inertia>
+        </inertial>
+        <collision name='arm_left_link_4_u_collision'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/collision/link_u.stl</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='arm_left_link_4_u_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/visual/link_u.stl</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <joint name='arm_left_joint_4_u' type='revolute'>
+        <child>arm_left_link_4_u</child>
+        <parent>arm_left_link_3_e</parent>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>-2.35619</lower>
+            <upper>2.35619</upper>
+            <effort>0</effort>
+            <velocity>2.96706</velocity>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+          <use_parent_model_frame>1</use_parent_model_frame>
+        </axis>
+      </joint>
+      <link name='arm_left_link_5_r'>
+        <pose frame=''>0.1 0.985 1.2 1.5708 -0 0</pose>
+        <inertial>
+          <pose frame=''>0 -0.0134 -0.133989 0 -0 0</pose>
+          <mass>5.5</mass>
+          <inertia>
+            <ixx>0.134067</ixx>
+            <ixy>5.74e-06</ixy>
+            <ixz>3.19e-05</ixz>
+            <iyy>0.132025</iyy>
+            <iyz>0.013502</iyz>
+            <izz>0.008969</izz>
+          </inertia>
+        </inertial>
+        <collision name='arm_left_link_5_r_collision'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/collision/link_r.stl</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='arm_left_link_5_r_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/visual/link_r.stl</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <joint name='arm_left_joint_5_r' type='revolute'>
+        <child>arm_left_link_5_r</child>
+        <parent>arm_left_link_4_u</parent>
+        <axis>
+          <xyz>0 -1 0</xyz>
+          <limit>
+            <lower>-3.14159</lower>
+            <upper>3.14159</upper>
+            <effort>0</effort>
+            <velocity>3.49066</velocity>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+          <use_parent_model_frame>1</use_parent_model_frame>
+        </axis>
+      </joint>
+      <link name='arm_left_link_6_b'>
+        <pose frame=''>0.1 0.985 1.2 0 -0 0</pose>
+        <inertial>
+          <pose frame=''>0 0.05919 0.001493 0 -0 0</pose>
+          <mass>3.5</mass>
+          <inertia>
+            <ixx>0.024033</ixx>
+            <ixy>-1.78e-05</ixy>
+            <ixz>3.03e-06</ixz>
+            <iyy>0.005402</iyy>
+            <iyz>-0.002585</iyz>
+            <izz>0.023675</izz>
+          </inertia>
+        </inertial>
+        <collision name='arm_left_link_6_b_collision'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/collision/link_b.stl</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='arm_left_link_6_b_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/visual/link_b.stl</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <joint name='arm_left_joint_6_b' type='revolute'>
+        <child>arm_left_link_6_b</child>
+        <parent>arm_left_link_5_r</parent>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>-1.91986</lower>
+            <upper>1.91986</upper>
+            <effort>0</effort>
+            <velocity>3.49066</velocity>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+          <use_parent_model_frame>1</use_parent_model_frame>
+        </axis>
+      </joint>
+      <link name='arm_left_link_7_t'>
+        <pose frame=''>0.1 1.14 1.2 -1.5708 0 0</pose>
+        <inertial>
+          <pose frame=''>0 0.00015 -0.02467 0 -0 0</pose>
+          <mass>1.5</mass>
+          <inertia>
+            <ixx>0.002083</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.0021</iyy>
+            <iyz>9.8e-07</iyz>
+            <izz>0.001926</izz>
+          </inertia>
+        </inertial>
+        <collision name='arm_left_link_7_t_collision'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/collision/link_t.stl</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='arm_left_link_7_t_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/visual/link_t.stl</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <joint name='arm_left_joint_7_t' type='revolute'>
+        <child>arm_left_link_7_t</child>
+        <parent>arm_left_link_6_b</parent>
+        <axis>
+          <xyz>0 -1 -0</xyz>
+          <limit>
+            <lower>-3.14159</lower>
+            <upper>3.14159</upper>
+            <effort>0</effort>
+            <velocity>6.98132</velocity>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+          <use_parent_model_frame>1</use_parent_model_frame>
+        </axis>
+      </joint>
+      <link name='arm_right_link_1_s'>
+        <pose frame=''>0.1 -0.265 1.2 1.5708 -0 3.14159</pose>
+        <inertial>
+          <pose frame=''>-0.000265 -0.022912 -0.263484 0 -0 0</pose>
+          <mass>10</mass>
+          <inertia>
+            <ixx>0.112042</ixx>
+            <ixy>-9.49e-06</ixy>
+            <ixz>5.84e-06</ixz>
+            <iyy>0.026163</iyy>
+            <iyz>-0.022776</iyz>
+            <izz>0.110175</izz>
+          </inertia>
+        </inertial>
+        <collision name='arm_right_link_1_s_collision'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/collision/link_s.stl</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='arm_right_link_1_s_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/visual/link_s.stl</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <joint name='arm_right_joint_1_s' type='revolute'>
+        <child>arm_right_link_1_s</child>
+        <parent>torso_link_b1</parent>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <limit>
+            <lower>-3.14159</lower>
+            <upper>3.14159</upper>
+            <effort>0</effort>
+            <velocity>2.96706</velocity>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+          <use_parent_model_frame>1</use_parent_model_frame>
+        </axis>
+      </joint>
+      <link name='arm_right_link_2_l'>
+        <pose frame=''>0.1 -0.265 1.2 0 -0 3.14159</pose>
+        <inertial>
+          <pose frame=''>0 0.079945 -0.009835 0 -0 0</pose>
+          <mass>8</mass>
+          <inertia>
+            <ixx>0.112042</ixx>
+            <ixy>-9.49e-06</ixy>
+            <ixz>5.84e-06</ixz>
+            <iyy>0.026163</iyy>
+            <iyz>-0.022776</iyz>
+            <izz>0.110175</izz>
+          </inertia>
+        </inertial>
+        <collision name='arm_right_link_2_l_collision'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/collision/link_l.stl</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='arm_right_link_2_l_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/visual/link_l.stl</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <joint name='arm_right_joint_2_l' type='revolute'>
+        <child>arm_right_link_2_l</child>
+        <parent>arm_right_link_1_s</parent>
+        <axis>
+          <xyz>0 -0 1</xyz>
+          <limit>
+            <lower>-1.91986</lower>
+            <upper>1.91986</upper>
+            <effort>0</effort>
+            <velocity>2.96706</velocity>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+          <use_parent_model_frame>1</use_parent_model_frame>
+        </axis>
+      </joint>
+      <link name='arm_right_link_3_e'>
+        <pose frame=''>0.1 -0.625 1.2 1.5708 -0 3.14159</pose>
+        <inertial>
+          <pose frame=''>0 0.018717 -0.119158 0 -0 0</pose>
+          <mass>7.5</mass>
+          <inertia>
+            <ixx>0.15655</ixx>
+            <ixy>-8.43e-06</ixy>
+            <ixz>4.35e-05</ixz>
+            <iyy>0.152788</iyy>
+            <iyz>-0.021001</iyz>
+            <izz>0.017946</izz>
+          </inertia>
+        </inertial>
+        <collision name='arm_right_link_3_e_collision'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/collision/link_e.stl</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='arm_right_link_3_e_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/visual/link_e.stl</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <joint name='arm_right_joint_3_e' type='revolute'>
+        <child>arm_right_link_3_e</child>
+        <parent>arm_right_link_2_l</parent>
+        <axis>
+          <xyz>0 1 0</xyz>
+          <limit>
+            <lower>-2.96706</lower>
+            <upper>2.96706</upper>
+            <effort>0</effort>
+            <velocity>2.96706</velocity>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+          <use_parent_model_frame>1</use_parent_model_frame>
+        </axis>
+      </joint>
+      <link name='arm_right_link_4_u'>
+        <pose frame=''>0.1 -0.625 1.2 0 -0 3.14159</pose>
+        <inertial>
+          <pose frame=''>0 0.093003 -0.006433 0 -0 0</pose>
+          <mass>6</mass>
+          <inertia>
+            <ixx>0.092098</ixx>
+            <ixy>-4.04e-05</ixy>
+            <ixz>-3.81e-06</ixz>
+            <iyy>0.0103</iyy>
+            <iyz>0.004406</iyz>
+            <izz>0.091086</izz>
+          </inertia>
+        </inertial>
+        <collision name='arm_right_link_4_u_collision'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/collision/link_u.stl</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='arm_right_link_4_u_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/visual/link_u.stl</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <joint name='arm_right_joint_4_u' type='revolute'>
+        <child>arm_right_link_4_u</child>
+        <parent>arm_right_link_3_e</parent>
+        <axis>
+          <xyz>0 -0 -1</xyz>
+          <limit>
+            <lower>-2.35619</lower>
+            <upper>2.35619</upper>
+            <effort>0</effort>
+            <velocity>2.96706</velocity>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+          <use_parent_model_frame>1</use_parent_model_frame>
+        </axis>
+      </joint>
+      <link name='arm_right_link_5_r'>
+        <pose frame=''>0.1 -0.985 1.2 1.5708 -0 3.14159</pose>
+        <inertial>
+          <pose frame=''>0 -0.0134 -0.133989 0 -0 0</pose>
+          <mass>5.5</mass>
+          <inertia>
+            <ixx>0.134067</ixx>
+            <ixy>5.74e-06</ixy>
+            <ixz>3.19e-05</ixz>
+            <iyy>0.132025</iyy>
+            <iyz>0.013502</iyz>
+            <izz>0.008969</izz>
+          </inertia>
+        </inertial>
+        <collision name='arm_right_link_5_r_collision'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/collision/link_r.stl</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='arm_right_link_5_r_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/visual/link_r.stl</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <joint name='arm_right_joint_5_r' type='revolute'>
+        <child>arm_right_link_5_r</child>
+        <parent>arm_right_link_4_u</parent>
+        <axis>
+          <xyz>-0 -1 -0</xyz>
+          <limit>
+            <lower>-3.14159</lower>
+            <upper>3.14159</upper>
+            <effort>0</effort>
+            <velocity>3.49066</velocity>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+          <use_parent_model_frame>1</use_parent_model_frame>
+        </axis>
+      </joint>
+      <link name='arm_right_link_6_b'>
+        <pose frame=''>0.1 -0.985 1.2 0 -0 3.14159</pose>
+        <inertial>
+          <pose frame=''>0 0.05919 0.001493 0 -0 0</pose>
+          <mass>3.5</mass>
+          <inertia>
+            <ixx>0.024033</ixx>
+            <ixy>-1.78e-05</ixy>
+            <ixz>3.03e-06</ixz>
+            <iyy>0.005402</iyy>
+            <iyz>-0.002585</iyz>
+            <izz>0.023675</izz>
+          </inertia>
+        </inertial>
+        <collision name='arm_right_link_6_b_collision'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/collision/link_b.stl</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='arm_right_link_6_b_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/visual/link_b.stl</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <joint name='arm_right_joint_6_b' type='revolute'>
+        <child>arm_right_link_6_b</child>
+        <parent>arm_right_link_5_r</parent>
+        <axis>
+          <xyz>0 -0 -1</xyz>
+          <limit>
+            <lower>-1.91986</lower>
+            <upper>1.91986</upper>
+            <effort>0</effort>
+            <velocity>3.49066</velocity>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+          <use_parent_model_frame>1</use_parent_model_frame>
+        </axis>
+      </joint>
+      <link name='arm_right_link_7_t'>
+        <pose frame=''>0.1 -1.14 1.2 -1.5708 -0 3.14159</pose>
+        <inertial>
+          <pose frame=''>0 0.00015 -0.02467 0 -0 0</pose>
+          <mass>1.5</mass>
+          <inertia>
+            <ixx>0.002083</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.0021</iyy>
+            <iyz>9.8e-07</iyz>
+            <izz>0.001926</izz>
+          </inertia>
+        </inertial>
+        <collision name='arm_right_link_7_t_collision'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/collision/link_t.stl</uri>
+            </mesh>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='arm_right_link_7_t_visual'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>/home/roblab4/catkin_ws/src/RobLab_equipment_congfig/motoman/motoman_sda10f_support/meshes/sda10f/visual/link_t.stl</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+      <joint name='arm_right_joint_7_t' type='revolute'>
+        <child>arm_right_link_7_t</child>
+        <parent>arm_right_link_6_b</parent>
+        <axis>
+          <xyz>-0 -1 0</xyz>
+          <limit>
+            <lower>-3.14159</lower>
+            <upper>3.14159</upper>
+            <effort>0</effort>
+            <velocity>6.98132</velocity>
+          </limit>
+          <dynamics>
+            <spring_reference>0</spring_reference>
+            <spring_stiffness>0</spring_stiffness>
+          </dynamics>
+          <use_parent_model_frame>1</use_parent_model_frame>
+        </axis>
+      </joint>
+      <static>0</static>
+      <plugin name='gazebo_ros_control' filename='libgazebo_ros_control.so'>
+        <robotNamespace>/sda10f</robotNamespace>
+      </plugin>
+      <pose frame=''>0 0 0 0 -0 0</pose>
+    </model>
+    <model name='kinect'>
+      <pose frame=''>-2.33746 7.0707 0.036 0 -0 0</pose>
+      <link name='link'>
+        <inertial>
+          <mass>0.1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <collision name='collision'>
+          <geometry>
+            <box>
+              <size>0.073 0.276 0.072</size>
+            </box>
+          </geometry>
+          <max_contacts>10</max_contacts>
+          <surface>
+            <contact>
+              <ode/>
+            </contact>
+            <bounce/>
+            <friction>
+              <torsional>
+                <ode/>
+              </torsional>
+              <ode/>
+            </friction>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>model://kinect/meshes/kinect.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <sensor name='camera' type='depth'>
+          <update_rate>20</update_rate>
+          <camera name='__default__'>
+            <horizontal_fov>1.0472</horizontal_fov>
+            <image>
+              <width>640</width>
+              <height>480</height>
+              <format>R8G8B8</format>
+            </image>
+            <clip>
+              <near>0.05</near>
+              <far>3</far>
+            </clip>
+          </camera>
+        </sensor>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+      </link>
+    </model>
+    <state world_name='default'>
+      <sim_time>351 768000000</sim_time>
+      <real_time>352 948445604</real_time>
+      <wall_time>1592918827 88911886</wall_time>
+      <iterations>351768</iterations>
+      <model name='ground_plane'>
+        <pose frame=''>0 0 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>0 0 0 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='kinect'>
+        <pose frame=''>1.72641 7.06592 0.036318 0.002305 -0 -6e-06</pose>
+        <scale>1 1 1</scale>
+        <link name='link'>
+          <pose frame=''>1.72641 7.06592 0.036318 0.002305 -0 -6e-06</pose>
+          <velocity>-2e-06 0.002683 -0.010181 -0.073847 -6.2e-05 0</velocity>
+          <acceleration>2e-06 -0.000749 -9.78691 -0.000183 4.8e-05 3e-06</acceleration>
+          <wrench>0 -7.5e-05 -0.978691 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='right_wall'>
+        <pose frame=''>-1 0 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='right_wall'>
+          <pose frame=''>-1 0 0 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='sda5'>
+        <pose frame=''>-2e-06 -2.1e-05 1e-06 -1.3e-05 1e-06 -4e-06</pose>
+        <scale>1 1 1</scale>
+        <link name='arm_left_link_1_s'>
+          <pose frame=''>0.098052 0.264974 1.19159 1.57319 0.397383 0.001024</pose>
+          <velocity>-0.496802 0.000792 -1.57838 0.994823 0.595937 0.716791</velocity>
+          <acceleration>-76.0849 12.0813 1031.74 -2.83651 0.622058 2.16255</acceleration>
+          <wrench>-760.849 120.813 10317.4 0 -0 0</wrench>
+        </link>
+        <link name='arm_left_link_2_l'>
+          <pose frame=''>0.095746 0.264985 1.19471 0.012514 0.397409 0.000958</pose>
+          <velocity>0.650186 0.018725 1.24681 0.281077 0.799295 -1.20112</velocity>
+          <acceleration>-45.7379 73.9872 2031.73 -1.47525 -0.291472 -0.978301</acceleration>
+          <wrench>-365.903 591.898 16253.9 0 -0 0</wrench>
+        </link>
+        <link name='arm_left_link_3_e'>
+          <pose frame=''>0.091931 0.625079 1.20537 1.58269 0.428137 0.001571</pose>
+          <velocity>7.28355 0.150762 6.37592 0.318472 1.4528 -0.93861</velocity>
+          <acceleration>-300.046 6.21445 3212.19 -2.09753 1.35212 0.2852</acceleration>
+          <wrench>-2250.34 46.6083 24091.5 0 -0 0</wrench>
+        </link>
+        <link name='arm_left_link_4_u'>
+          <pose frame=''>0.094701 0.625074 1.20212 0.015397 0.428673 -0.045642</pose>
+          <velocity>6.37851 0.094844 3.30722 -0.467656 1.05937 0.491724</velocity>
+          <acceleration>96.6169 -17.9685 1716.25 -1.90068 -0.311794 -0.153251</acceleration>
+          <wrench>579.702 -107.811 10297.5 0 -0 0</wrench>
+        </link>
+        <link name='arm_left_link_5_r'>
+          <pose frame=''>0.109971 0.984998 1.21192 1.58448 0.459949 -0.044509</pose>
+          <velocity>22.6218 -0.103054 -1.75097 0.125993 0.690386 1.35848</velocity>
+          <acceleration>103.982 -495.715 -3641.47 -2.41566 0.601057 2.24869</acceleration>
+          <wrench>571.903 -2726.43 -20028.1 0 -0 0</wrench>
+        </link>
+        <link name='arm_left_link_6_b'>
+          <pose frame=''>0.105386 0.990111 1.2182 0.135019 0.460258 -0.10261</pose>
+          <velocity>25.0982 1.2403 5.00673 -2.6025 0.594528 -2.94426</velocity>
+          <acceleration>142.853 -557.105 -1538.45 2.59097 -0.140172 -0.431093</acceleration>
+          <wrench>499.987 -1949.87 -5384.59 0 -0 0</wrench>
+        </link>
+        <link name='arm_left_link_7_t'>
+          <pose frame=''>0.125651 1.1439 1.24304 -1.44002 0.462374 -0.098791</pose>
+          <velocity>61.4045 0.274379 -4.97961 1.77363 0.467233 0.228439</velocity>
+          <acceleration>77.1369 -645.142 -1138.08 1.68106 -1.45282 -1.15312</acceleration>
+          <wrench>115.705 -967.713 -1707.12 0 -0 0</wrench>
+        </link>
+        <link name='arm_right_link_1_s'>
+          <pose frame=''>0.100007 -0.265059 1.20002 1.57055 -0.071694 -3.14122</pose>
+          <velocity>0.033898 -0.01198 -0.200153 3.02802 0.555868 -2.90012</velocity>
+          <acceleration>175.259 -51.1024 -408.749 2.09221 0.172693 -0.842731</acceleration>
+          <wrench>1752.59 -511.024 -4087.49 0 -0 0</wrench>
+        </link>
+        <link name='arm_right_link_2_l'>
+          <pose frame=''>0.099858 -0.265066 1.20036 -9.7e-05 -0.071742 -3.14123</pose>
+          <velocity>-0.051269 -0.001415 -0.239761 -3.10839 0.466583 -2.79206</velocity>
+          <acceleration>-102.811 -15.0526 -832.877 -2.30441 -1.14877 0.018209</acceleration>
+          <wrench>-822.485 -120.42 -6663.02 0 -0 0</wrench>
+        </link>
+        <link name='arm_right_link_3_e'>
+          <pose frame=''>0.096141 -0.625043 1.20771 1.57192 0.426521 -3.14069</pose>
+          <velocity>0.201166 0.0067 1.66679 0.388092 0.518348 1.07533</velocity>
+          <acceleration>-40.7417 -36.8333 -1261.89 -1.96649 1.01449 1.58384</acceleration>
+          <wrench>-305.563 -276.25 -9464.2 0 -0 0</wrench>
+        </link>
+        <link name='arm_right_link_4_u'>
+          <pose frame=''>0.093445 -0.625014 1.20428 0.014098 0.426464 3.13981</pose>
+          <velocity>1.86962 0.012943 -1.71161 -3.04156 0.335696 0.632417</velocity>
+          <acceleration>-43.9471 5.45464 -1305.67 1.29729 -0.779066 -0.114438</acceleration>
+          <wrench>-263.682 32.7278 -7834.01 0 -0 0</wrench>
+        </link>
+        <link name='arm_right_link_5_r'>
+          <pose frame=''>0.092062 -0.985017 1.21061 1.58437 0.444002 3.14038</pose>
+          <velocity>-4.90638 -0.008637 -2.58622 -2.85044 0.749441 0.838754</velocity>
+          <acceleration>-23.4846 20.9422 -1892.78 1.90934 0.219605 -2.43291</acceleration>
+          <wrench>-129.165 115.182 -10410.3 0 -0 0</wrench>
+        </link>
+        <link name='arm_right_link_6_b'>
+          <pose frame=''>0.09697 -0.989114 1.2168 0.112339 0.450024 3.04075</pose>
+          <velocity>-8.41504 -1.08767 4.13606 -0.459627 -1.41212 -1.57305</velocity>
+          <acceleration>122.527 -1260.35 2386.29 2.48687 -1.14369 -0.942128</acceleration>
+          <wrench>428.845 -4411.24 8352.03 0 -0 0</wrench>
+        </link>
+        <link name='arm_right_link_7_t'>
+          <pose frame=''>0.077979 -1.14314 1.23742 -1.45805 0.457518 3.04406</pose>
+          <velocity>-40.119 -0.202598 -5.64942 3.09777 0.583673 2.39744</velocity>
+          <acceleration>151.023 -2987.14 7300.53 -2.76591 1.19895 0.108183</acceleration>
+          <wrench>226.535 -4480.71 10950.8 0 -0 0</wrench>
+        </link>
+        <link name='torso_base_link'>
+          <pose frame=''>-1e-06 -5e-06 1.2 -1.3e-05 1e-06 -4e-06</pose>
+          <velocity>0.000261 -0.005318 -0.001936 -0.013089 -0.000198 0.004264</velocity>
+          <acceleration>0.271912 -1.35165 -1.11368 -2.8207 -0.104313 -2.21724</acceleration>
+          <wrench>18.49 -91.9119 -75.7303 0 -0 0</wrench>
+        </link>
+        <link name='torso_link_b1'>
+          <pose frame=''>-3e-06 -6.8e-05 1.20001 -7e-06 4e-06 0.000231</pose>
+          <velocity>-0.000972 -0.047494 0.000171 -0.006885 0.002074 0.238997</velocity>
+          <acceleration>-0.748053 -91.2829 2.12385 2.1522 -0.122815 -0.172144</acceleration>
+          <wrench>-38.8987 -4746.71 110.44 0 -0 0</wrench>
+        </link>
+      </model>
+      <model name='table'>
+        <pose frame=''>0.7 0 0 0 -0 0</pose>
+        <scale>1 1 1</scale>
+        <link name='table'>
+          <pose frame=''>0.7 0 0 0 -0 0</pose>
+          <velocity>0 0 0 0 -0 0</velocity>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
+        </link>
+      </model>
+      <light name='sun'>
+        <pose frame=''>0 0 10 0 -0 0</pose>
+      </light>
+    </state>
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose frame=''>-0.575344 1.94202 0.809039 0 -0.064357 1.27219</pose>
+        <view_controller>orbit</view_controller>
+        <projection_type>perspective</projection_type>
+      </camera>
+    </gui>
+  </world>
+</sdf>

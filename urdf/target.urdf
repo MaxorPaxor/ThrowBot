@@ -1,0 +1,35 @@
+<robot name="target">
+  <link name="target">
+
+<!--    <pose>2.0 5.0 1.0 0 0 0</pose>-->
+
+    <inertial>
+       <origin xyz="0.0 0 0.0" />
+<!--        <mass value="0.01" />-->
+<!--        <inertia  ixx="0.00015" ixy="0.0"  ixz="0.0"  iyy="0.00015"  iyz="0.0"  izz="0.000015" />-->
+      <mass value="110.01" />
+      <inertia  ixx="0.15" ixy="0.0"  ixz="0.0"  iyy="0.15"  iyz="0.0"  izz="0.015" />
+<!--        <inertia  ixx="0.000" ixy="0.0"  ixz="0.0"  iyy="0.000"  iyz="0.0"  izz="0.0000" />-->
+    </inertial>
+
+        <collision>
+            <origin xyz="0.0 0 0.0" />
+            <geometry>
+                <cylinder length="0.00005" radius="0.1"/>
+            </geometry>
+        </collision>
+
+        <visual>
+            <origin xyz="0.0 0 0.0" />
+            <geometry>
+                <cylinder length="0.00005" radius="0.1"/>
+            </geometry>
+        </visual>
+
+  </link>
+
+  <gazebo reference="target">
+    <material>Gazebo/GreenTransparent</material>
+  </gazebo>
+
+</robot>

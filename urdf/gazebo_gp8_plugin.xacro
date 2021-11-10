@@ -1,0 +1,188 @@
+<?xml version="1.0" ?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+ <xacro:macro name="transmitions" params="prefix">
+
+
+    <!-- transmission list -->
+      <transmission name="${prefix}tran_1_s">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${prefix}joint_1_s">
+<!--       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>-->
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+
+      </joint>
+      <actuator name="${prefix}motor_1_s">
+      <mechanicalReduction>1</mechanicalReduction>
+<!--       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>-->
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </actuator>
+      </transmission>
+      
+      <transmission name="${prefix}tran_2_l">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${prefix}joint_2_l">
+<!--       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>-->
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="${prefix}motor_2_l">
+      <mechanicalReduction>1</mechanicalReduction>
+<!--       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>-->
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </actuator>
+      </transmission>
+        
+      <transmission name="${prefix}tran_3_u">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${prefix}joint_3_u">
+<!--       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>-->
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="${prefix}motor_3_u">
+      <mechanicalReduction>1</mechanicalReduction>
+<!--       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>-->
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </actuator>
+      </transmission>  
+        
+      <transmission name="${prefix}tran_4_r">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${prefix}joint_4_r">
+<!--       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>-->
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="${prefix}motor_4_r">
+      <mechanicalReduction>1</mechanicalReduction>
+<!--       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>-->
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </actuator>
+      </transmission>
+        
+      <transmission name="${prefix}tran_5_b">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${prefix}joint_5_b">
+<!--       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>-->
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="${prefix}motor_5_b">
+      <mechanicalReduction>1</mechanicalReduction>
+<!--       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>-->
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </actuator>
+      </transmission>
+      
+      <transmission name="${prefix}tran_6_t">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${prefix}joint_6_t">
+<!--       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>-->
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="${prefix}motor_6_t">
+      <mechanicalReduction>1</mechanicalReduction>
+<!--       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>-->
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </actuator>
+      </transmission> 
+        
+      <!-- end of transmission list -->	
+  
+
+  <gazebo reference="base">  
+      <material>Gazebo/Blue</material>
+  </gazebo>
+  <gazebo reference="base_link">  
+      <material>Gazebo/Blue</material>
+  </gazebo>
+    <gazebo reference="link_1_s">  
+      <material>Gazebo/Blue</material>
+  </gazebo>
+    <gazebo reference="link_2_l">  
+      <material>Gazebo/Blue</material>
+  </gazebo>
+    <gazebo reference="link_3_u">  
+      <material>Gazebo/Blue</material>
+  </gazebo>
+    <gazebo reference="link_4_r">  
+      <material>Gazebo/Blue</material>
+  </gazebo>
+    <gazebo reference="link_5_b">  
+      <material>Gazebo/Blue</material>
+  </gazebo>
+  <gazebo reference="link_6_t">  
+      <material>Gazebo/Blue</material>
+  </gazebo>
+  <gazebo reference="tool0">  
+      <material>Gazebo/Blue</material>
+  </gazebo>
+<!--
+<gazebo reference="right_inner_finger">
+    <mu1>1000000</mu1>
+    <mu2>1000000</mu2>
+    <kp>100.0</kp>
+    <kd>10.0</kd>
+    <minDepth>0.003</minDepth>
+    <maxVel>0</maxVel>
+</gazebo>
+
+<gazebo reference="left_inner_finger">
+    <mu1>1000000</mu1>
+    <mu2>1000000</mu2>
+    <kp>100.0</kp>
+    <kd>10.0</kd>
+    <minDepth>0.003</minDepth>
+    <maxVel>0</maxVel>
+</gazebo>
+-->
+
+      <!-- Add friction to right gripper -->
+
+  <gazebo reference="right_inner_finger">
+      <surface>
+        <friction>
+          <torsional>
+            <coefficient>10.0</coefficient>
+<!--            <use_patch_radius>true</use_patch_radius>-->
+<!--            <patch_radius>0.05</patch_radius>-->
+          </torsional>
+        </friction>
+        <contact>
+          <poissons_ratio>0.5</poissons_ratio>
+          <elastic_modulus>1e8</elastic_modulus>
+        </contact>
+      </surface>
+<!--    <mu1>10</mu1>-->
+<!--    <mu2>10</mu2>-->
+<!--    <maxVel>1</maxVel>-->
+<!--    <kp>1000000.0</kp>-->
+<!--    <kd>100.0</kd>-->
+<!--    <fdir1>0 0 1</fdir1>-->
+    <minDepth>0.0</minDepth>
+<!--    <maxContacts>100</maxContacts>-->
+  </gazebo>
+
+       <gazebo reference="left_inner_finger">
+      <surface>
+        <friction>
+          <torsional>
+            <coefficient>10.0</coefficient>
+<!--            <use_patch_radius>true</use_patch_radius>-->
+<!--            <patch_radius>0.05</patch_radius>-->
+          </torsional>
+        </friction>
+        <contact>
+          <poissons_ratio>0.5</poissons_ratio>
+          <elastic_modulus>1e8</elastic_modulus>
+        </contact>
+      </surface>
+<!--    <mu1>10</mu1>-->
+<!--    <mu2>10</mu2>-->
+<!--    <maxVel>1</maxVel>-->
+<!--    <kp>1000000.0</kp>-->
+<!--    <kd>100.0</kd>-->
+<!--    <fdir1>0 0 1</fdir1>-->
+    <minDepth>0.0</minDepth>
+<!--    <maxContacts>100</maxContacts>-->
+  </gazebo>
+
+
+    </xacro:macro>
+</robot>

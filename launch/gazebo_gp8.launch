@@ -1,0 +1,46 @@
+
+<launch>
+
+  <!-- these are the arguments you can pass this launch file, for example paused:=true -->
+  <!-- <arg name="model" default="$(find gp8_simulation)/urdf/gp8_gazebo.xacro"/> -->
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+
+  <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find gazebo_ros)/worlds/empty.world"/>
+    <arg name="debug" value="$(arg debug)" />
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="headless" value="$(arg headless)"/>
+  </include>
+
+  <!-- Load the URDF into the ROS Parameter Server -->
+  <param name="robot_description" command="$(find xacro)/xacro.py $(find deep_deterministic_robotic_arm)/urdf/gp8_gazebo.xacro" />
+  <param name="object_description" command="$(find xacro)/xacro.py $(find deep_deterministic_robotic_arm)/urdf/object.urdf" />
+  <param name="target_description" command="$(find xacro)/xacro.py $(find deep_deterministic_robotic_arm)/urdf/target.urdf" />
+
+
+  <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
+  <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+  		args="-urdf -model motoman_gp8 -param robot_description "/>
+
+  <node name="spawn_object" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+        args="-urdf -model simple_box -param object_description -x 0.6 -y 0 -z 0.05"/>
+
+  <node name="spawn_target" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+        args="-urdf -model target -param target_description -x 1.6 -y 0 -z 0.0001"/>
+
+  <!-- ros_control motoman launch file -->
+  <include file="$(find deep_deterministic_robotic_arm)/launch/gp8_control.launch"/>
+
+
+  <!-- motoman manual_movment node >
+  <node name="trajectory" pkg="sda10f_gazebo" type="move_motoman_node.py" output="screen">
+  </node-->
+</launch>

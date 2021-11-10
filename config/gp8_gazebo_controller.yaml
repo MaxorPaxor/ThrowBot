@@ -1,0 +1,30 @@
+
+# Publish all joint states -----------------------------------
+/motoman_gp8/joint_state_controller:
+  type: joint_state_controller/JointStateController
+  publish_rate: 50
+
+
+# Trajectory Controllers
+/motoman_gp8/gp8_controller:
+#  type: position_controllers/JointTrajectoryController
+  type: effort_controllers/JointTrajectoryController
+  joints:
+      - joint_1_s
+      - joint_2_l
+      - joint_3_u
+      - joint_4_r
+      - joint_5_b
+      - joint_6_t
+      - finger_joint
+
+  gains:
+    joint_1_s: { p: 10000, d: 100, i: 5, i_clamp: 1 }
+    joint_2_l: { p: 10000, d: 100, i: 5, i_clamp: 1 }
+    joint_3_u: { p: 10000, d: 100, i: 5, i_clamp: 1 }
+    joint_4_r: { p: 10000, d: 100, i: 5, i_clamp: 1 }
+    joint_5_b: { p: 2000, d: 100, i: 5, i_clamp: 1 }  # 2000
+    joint_6_t: { p: 10000, d: 100, i: 5, i_clamp: 1 }
+    finger_joint: { p: 50, d: 0.05, i: 0.0, i_clamp: 0.0}
+#    finger_joint: { p: 50, d: 0.05, i: 0, i_clamp: 0} <release_tolerance>1e-3</release_tolerance>
+

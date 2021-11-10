@@ -1,0 +1,16 @@
+
+<launch>
+
+
+  <!-- Load the URDF into tshe ROS Parameter Server -->
+  <param name="robot_description"	 command="$(find xacro)/xacro.py $(find deep_deterministic_robotic_arm)/urdf/gp8_gazebo.xacro" />
+
+
+  <!-- ros_control motoman launch file -->
+  <!-- <include file="$(find gp8_simulation)/launch/gp8_control.launch"/> -->
+
+
+  <!-- motoman manual_movment node >
+  <node name="trajectory" pkg="sda10f_gazebo" type="move_motoman_node.py" output="screen">
+  </node-->
+</launch>

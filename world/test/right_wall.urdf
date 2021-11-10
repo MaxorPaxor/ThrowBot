@@ -1,0 +1,81 @@
+<?xml version="1.0" ?>
+
+<robot name="right_wall">
+
+ <!-- <link name="world"/> -->
+
+    <link name="right_wall">
+      <visual>
+        <origin rpy="0 0 0" xyz="0 0 0.25"/>
+        <geometry>
+          <box size="0.2 2 2.3" />
+        </geometry>
+        <material name="white"/>
+      </visual>
+      <inertial>
+          <origin xyz="0 0 0.0" rpy="0 0 0"/>
+          <mass value="0.1"/>
+          <inertia
+            ixx="0.0" ixy="0.0" ixz="0.0"
+            iyy="0.0" iyz="0.0"
+            izz="0.0"/>
+        </inertial>
+      <collision>
+        <origin rpy="0 0 0" xyz="0 0 0.25"/>
+        <geometry>
+          <box size="0.2 2 2.3" />
+        </geometry>
+      </collision>
+      <!-- <gazebo reference="table">
+        <material>Gazebo/Wood</material>
+      </gazebo> -->
+      <!-- <gazebo>
+        
+      </gazebo> -->
+    </link>
+
+    <joint name="world_to_table" type="fixed">
+      <parent link="right_wall"/>
+      <child link="left_wall"/>
+      <origin
+        xyz="0.2 1 0"
+        rpy="0 0 0" />
+    </joint> >
+
+        <link name="left_wall">
+      <visual>
+        <origin rpy="0 0 0" xyz="0 0 0.25"/>
+        <geometry>
+          <box size="0.2 0.5 2.3" />
+        </geometry>
+        <material name="green"/>
+      </visual>
+      <inertial>
+          <origin xyz="0 0 0.0" rpy="0 0 0"/>
+          <mass value="0.1"/>
+          <inertia
+            ixx="0.0" ixy="0.0" ixz="0.0"
+            iyy="0.0" iyz="0.0"
+            izz="0.0"/>
+        </inertial>
+      <collision>
+        <origin rpy="0 0 0" xyz="0 0 0.25"/>
+        <geometry>
+          <box size="0.5 0.5 0.5" />
+        </geometry>
+      </collision>
+      <!-- <gazebo reference="table">
+        <material>Gazebo/Wood</material>
+      </gazebo> -->
+      <!-- <gazebo>
+        
+      </gazebo> -->
+    </link>
+
+    <gazebo reference="right_wall">
+        <material>Gazebo/wigth</material>
+    </gazebo>
+    <gazebo>
+        <static>true</static>
+    </gazebo>
+</robot>
