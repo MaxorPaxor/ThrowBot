@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <robot name="motoman_gp8" xmlns:xacro="http://ros.org/wiki/xacro">
-	<xacro:include filename="$(find deep_deterministic_robotic_arm)/urdf/gp8_macro_gazebo.xacro" />
+	<xacro:include filename="$(find ThrowBot)/urdf/gp8_macro_gazebo.xacro" />
 	<xacro:motoman_gp8 prefix=""/>
 	<link name="world" />
     <joint name="world_to_gp8" type="fixed">

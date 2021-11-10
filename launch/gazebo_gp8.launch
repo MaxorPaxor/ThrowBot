@@ -21,9 +21,9 @@
   </include>
 
   <!-- Load the URDF into the ROS Parameter Server -->
-  <param name="robot_description" command="$(find xacro)/xacro.py $(find deep_deterministic_robotic_arm)/urdf/gp8_gazebo.xacro" />
-  <param name="object_description" command="$(find xacro)/xacro.py $(find deep_deterministic_robotic_arm)/urdf/object.urdf" />
-  <param name="target_description" command="$(find xacro)/xacro.py $(find deep_deterministic_robotic_arm)/urdf/target.urdf" />
+  <param name="robot_description" command="$(find xacro)/xacro.py $(find ThrowBot)/urdf/gp8_gazebo.xacro" />
+  <param name="object_description" command="$(find xacro)/xacro.py $(find ThrowBot)/urdf/object.urdf" />
+  <param name="target_description" command="$(find xacro)/xacro.py $(find ThrowBot)/urdf/target.urdf" />
 
 
   <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
@@ -37,7 +37,7 @@
         args="-urdf -model target -param target_description -x 1.6 -y 0 -z 0.0001"/>
 
   <!-- ros_control motoman launch file -->
-  <include file="$(find deep_deterministic_robotic_arm)/launch/gp8_control.launch"/>
+  <include file="$(find ThrowBot)/launch/gp8_control.launch"/>
 
 
   <!-- motoman manual_movment node >

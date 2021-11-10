@@ -1,4 +1,4 @@
-# deep_deterministic_robotic_arm
+# ThrowBot
 The idea of this work is to introduce a new robust methods to teach industrial arms dynamically complex tasks
 without any prior knowledge of the robot's kinematic or dynamic models, nor any analytical idea of the dynamic task.
 
@@ -166,6 +166,11 @@ We change our code so far as follows:
 otherwise we return R = -1.0.
 4. We uniformly generate K more targets in a radius ε' around the landing spot L,
 and create K more Markov tuples ((S||T), a, R, (S'||T), done) and insert them to the buffer.
+
+<p align="center">
+<img src="gif/ThrowBotHer.gif">
+</p>
+<h5 align="center">Motoman-gp8 throwing 0.5kg box at generated targets</h5>
 
 ## Dependencies
 ### ROS Dependencies

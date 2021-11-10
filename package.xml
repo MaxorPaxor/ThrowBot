@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>deep_deterministic_robotic_arm</name>
+  <name>ThrowBot</name>
   <version>0.0.0</version>
-  <description>deep_deterministic_robotic_arm</description>
+  <description>ThrowBot</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->

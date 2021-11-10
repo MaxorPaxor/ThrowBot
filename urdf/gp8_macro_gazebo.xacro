@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
     <xacro:macro name="motoman_gp8" params="prefix">
-    <xacro:include filename="$(find deep_deterministic_robotic_arm)/urdf/gazebo_gp8_plugin.xacro" />
+    <xacro:include filename="$(find ThrowBot)/urdf/gazebo_gp8_plugin.xacro" />
     	<xacro:transmitions prefix=""/>
 
     

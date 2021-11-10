@@ -3,7 +3,7 @@
 
 
   <!-- Load the URDF into tshe ROS Parameter Server -->
-  <param name="robot_description"	 command="$(find xacro)/xacro.py $(find deep_deterministic_robotic_arm)/urdf/gp8_gazebo.xacro" />
+  <param name="robot_description"	 command="$(find xacro)/xacro.py $(find ThrowBot)/urdf/gp8_gazebo.xacro" />
 
 
   <!-- ros_control motoman launch file -->
