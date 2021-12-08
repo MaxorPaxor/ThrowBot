@@ -5,14 +5,6 @@ from robot_env import RoboticArm
 from agent import Agent
 
 
-def get_action_const(n):
-    commands = np.array([[-0.99194705, 0.99566853, 0.46396953, 0.9963475],
-                         [-0.93870115, 0.9942026,  0.67372084, 0.9633025],
-                         [0.9995295,  0.97842085, 0.9808242, -0.9998943]])
-
-    return commands[n]
-
-
 def eval_model(arm, agent, evaluation_episodes=100, print_info=True):
     agent.actor.eval()
 
@@ -29,7 +21,6 @@ def eval_model(arm, agent, evaluation_episodes=100, print_info=True):
         state = arm.get_3_state()  # get state
         action = agent.get_action_eval(state)  # get action
         reward, done, termination_reason, obj_pos, success = arm.step(action)  # perform action and get new state
-
         agent.episode_length += 1
 
         if done:
@@ -74,9 +65,9 @@ def eval_model(arm, agent, evaluation_episodes=100, print_info=True):
 
 if __name__ == "__main__":
     arm_new = RoboticArm()
-
     agent_new = Agent(arm=arm_new)
-    checkpoint = torch.load("./model/actor_best.pth", map_location=torch.device('cpu'))
+
+    checkpoint = torch.load("./weights/actor_best.pth", map_location=torch.device('cpu'))
     try:
         agent_new.actor.load_state_dict(checkpoint['state_dict'])
     except KeyError:

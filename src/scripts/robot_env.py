@@ -30,7 +30,7 @@ class RoboticArm:
 
         # HER attributes
         self.her = True
-        self.target_radius = 0.15  # meters
+        self.target_radius = 0.2  # meters
 
         self.target = np.array([2, 0, 0])
         # Note: Target will be static unless agent class will override it when using HER
@@ -291,7 +291,7 @@ class RoboticArm:
 
         state = []
 
-        if len(self.state_mem) != 3:
+        if len(self.state_mem) != self.number_states:
             time.sleep(0.05)  # Make sure the buffer is full with 3 states
 
         for s in self.state_mem:
@@ -335,8 +335,8 @@ class RoboticArm:
             obj_pos = self.object_position
 
         distance = np.sqrt((obj_pos[0] - target[0]) ** 2 +
-                           (obj_pos[1] - target[1]) ** 2 +
-                           (obj_pos[2] - target[2]) ** 2)
+                           (obj_pos[1] - target[1]) ** 2)  # +
+                           # (obj_pos[2] - target[2]) ** 2)
 
         if distance <= self.target_radius and obj_pos[0] > self.initial_pos[0]:
             return 1.0
@@ -365,6 +365,13 @@ class RoboticArm:
         velocity_vector_max = velocity_vector_max * np.pi/180
         velocity_vector_max[-1] = velocity_vector[-1]
         return velocity_vector_max
+
+    def wait_for_object_to_touch_ground(self):
+        t1 = time.time()
+        while not self.object_height <= 0.05 * np.sqrt(2):  # Make sure object is on the ground
+            time.sleep(0.005)
+            if time.time() - t1 > 3:  # timeout
+                break
 
     def step(self, velocity_vector):
         """
@@ -396,37 +403,31 @@ class RoboticArm:
         - Gripper was opened
         - Object touched the ground
         """
-        # if self.curr_time >= self.total_time or gripper < 0:
         if self.curr_step >= self.number_steps or gripper < 0:
-
-            # Termination reason string
-            if gripper < 0:
-                termination_reason = "Gripper was opened with value: {}".format(gripper)
-            else:
-                termination_reason = "Time is up: {}".format(self.curr_time)
-
             done = True
 
-            # If object is release, wait for it to fall and reward the action
+            # If object is released, wait for it to fall and reward the action
             if gripper < 0:
-                t1 = time.time()
-                while not self.object_height <= 0.05 * np.sqrt(2):  # Make sure object is on the ground
-                    time.sleep(0.01)
-                    if time.time() - t1 > 3:  # timeout
-                        break
+                termination_reason = "Gripper was opened with value: {}".format(gripper)
+                self.wait_for_object_to_touch_ground()
 
                 # Successful throw reward:
                 if self.her:
                     reward = self.reward_sparse()
+                    distance = self.object_position
                 else:
                     reward = self.distance_to_reward_shaped()
+                    distance = self.object_position
                 success = True
 
             else:
+                termination_reason = "Time is up: {}".format(self.curr_time)
                 if self.her:
                     reward = -1.0
+                    distance = self.object_position
                 else:
                     reward = self.distance_to_reward_shaped()
+                    distance = self.object_position
                 success = False
 
         else:  # Gripper is closed and time is not up
@@ -434,15 +435,17 @@ class RoboticArm:
                 termination_reason = "Object is too close to ground: {}".format(self.object_height)
                 done = True
                 reward = -1.0
+                distance = self.object_position
                 success = False
 
-            else:
+            else:  # Continue episode
                 termination_reason = None
                 done = False
                 reward = 0.0
+                distance = self.object_position
                 success = False
 
-        return reward, done, termination_reason, self.object_position, success
+        return reward, done, termination_reason, distance, success
 
     def test_throw_position(self):
         """

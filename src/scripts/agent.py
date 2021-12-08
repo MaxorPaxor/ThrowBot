@@ -4,7 +4,8 @@ import numpy as np
 from collections import deque
 import pickle
 
-from model import Critic, CriticRes, Actor, ActorRes, DDPGTrainer, OUActionNoise
+from model.model import Critic, Actor, DDPGTrainer
+from model.noise import OUActionNoise
 
 
 class Agent:
@@ -26,9 +27,10 @@ class Agent:
         self.n_states = self.n_actions * self.arm.number_states
         if self.her:
             self.n_states += 1
+        print(self.n_states, self.n_actions)
 
         # Buffer
-        self.MAX_MEMORY = 100_000
+        self.MAX_MEMORY = 300_000
         self.memory = deque(maxlen=int(self.MAX_MEMORY))  # popleft()
         if load_mem:
             self.memory = pickle.load(open('./data/memory.pkl', 'rb'))
@@ -39,19 +41,19 @@ class Agent:
         self.noise_soft = OUActionNoise(mu=np.zeros(self.n_actions), sigma=0.4, dt=2e-2, theta=0.1)
         # self.noise_soft = OUActionNoise(mu=np.zeros(self.n_actions), sigma=0.0, dt=0e-2, theta=0.0)
         self.exploration_flag = True
-        self.epsilon_arm = 50
+        self.epsilon_arm = 0  # 50
         self.soft_exploration_rate = 50
-        self.epsilon_arm_decay = 1e-04
+        self.epsilon_arm_decay = 1e-05
         self.exploration_open_gripper = 0
         self.update_exploration()
 
         # Learning Params
-        self.LR_actor = 1e-04
+        self.LR_actor = 3e-04
         self.LR_critic = 3e-04  # 1e-04
-        self.gamma = 0.90  # discount rate
+        self.gamma = 0.95  # discount rate
         self.BATCH_SIZE = 128
-        self.num_mini_batches_per_training = 40
-        self.train_every_n_episode = 16
+        self.num_mini_batches_per_training = 40  # 40
+        self.train_every_n_episode = 16  # 16
         self.n_episodes = 0
         self.episode_length = 0
         self.num_epoch = 0
@@ -87,11 +89,11 @@ class Agent:
         Decay exploration rate, decide on opening moment
         """
 
-        if self.epsilon_arm > 20:
+        if self.epsilon_arm > 3:
             self.epsilon_arm = self.epsilon_arm * (1 - self.epsilon_arm_decay)
             # self.soft_exploration_rate = self.soft_exploration_rate * (1 - self.epsilon_arm_decay)
         else:
-            self.epsilon_arm = 20
+            self.epsilon_arm = 0
             # self.soft_exploration_rate = 20
 
             # Decide if next episode will have exploration
@@ -307,8 +309,8 @@ class Agent:
         """
 
         distance = np.sqrt((obj_pos[0] - target[0]) ** 2 +
-                           (obj_pos[1] - target[1]) ** 2 +
-                           (obj_pos[2] - target[2]) ** 2)
+                           (obj_pos[1] - target[1]) ** 2)  # +
+                           # (obj_pos[2] - target[2]) ** 2)
 
         return distance
 

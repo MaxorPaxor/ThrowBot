@@ -1,16 +1,12 @@
-import torch
-import random
 import numpy as np
-from collections import deque
-import pickle
 import time
 from datetime import timedelta
 
 from agent import Agent
 from robot_env import RoboticArm
-from model import Critic, CriticRes, Actor, ActorRes, DDPGTrainer, OUActionNoise
+from utils import Plot
 from eval_model import eval_model
-from helper import plot
+
 
 # LOAD_NN = True
 # LOAD_MEMORY = True
@@ -36,6 +32,7 @@ def train():
 
     arm = RoboticArm()
     agent = Agent(arm=arm, load_nn=LOAD_NN, load_mem=LOAD_MEMORY)
+    plotter = Plot()
 
     start_time = time.time()
     total_time = 0
@@ -127,8 +124,8 @@ def train():
             print('=======================================================')
 
             agent.train_ddpg()
-            plot(reward_list, mean_reward_list, mean_distance_from_target_list,
-                 mean_distance_evaluated_list, evaluated_epochs_list)
+            plotter.plot(reward_list, mean_reward_list, mean_distance_from_target_list,
+                         mean_distance_evaluated_list, evaluated_epochs_list)
             agent.save(eval_distance=mean_distance_eval)
             agent.update_exploration()
             agent.episode_length = 0
