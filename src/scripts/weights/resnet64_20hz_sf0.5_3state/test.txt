@@ -1,3 +1,0 @@
- Mean distance:             0.4558
- Variance distance:         0.3272
-
