@@ -13,19 +13,29 @@ def experiment():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     max_ep_len = 10
-    state_dim = 5  # 5
+    state_dim = 5  # 5 or 13
     act_dim = 4
+    batch_size = 512
+    K = 10
 
     # load dataset
-    transitions = pickle.load(open('./data/memory_random.pkl', 'rb'))
+    transitions = pickle.load(open('./data/memory_random_2.pkl', 'rb'))
     # (state, action, reward, next_state, done)
+
+    # a = 0
+    # for transition in transitions:
+    #     if transition[2] == -1:
+    #         a += 1
+    # print(a)
+    # import ipdb;
+    # ipdb.set_trace(context=20)
 
     trajectories = []
     trajectory = []
     states = []
     for transition in transitions:
         trajectory.append(list(transition))
-        states.append(transition[0])
+        states.append(transition[0][np.array([0, 1, 2, 3, -1])])
         if transition[4] is True:
             trajectories.append(trajectory)
             trajectory = []
@@ -35,9 +45,6 @@ def experiment():
     # For normalization
     states_ = np.concatenate(states, axis=0)
     state_mean, state_std = np.mean(states_, axis=0), np.std(states_, axis=0) + 1e-6
-
-    batch_size = 128
-    K = 10
 
     def get_batch(batch_size=256, max_len=K):
 
@@ -52,8 +59,9 @@ def experiment():
         for i in range(batch_size):
             traj = trajectories[batch_inds[i]]
 
+            # import ipdb; ipdb.set_trace(context=20)
             # get sequences from dataset
-            s.append(np.array([t[0] for t in traj]).reshape(1, -1, state_dim))
+            s.append(np.array([t[0][np.array([0, 1, 2, 3, -1])] for t in traj]).reshape(1, -1, state_dim))
             a.append(np.array([t[1] for t in traj]).reshape(1, -1, act_dim))
             r.append(np.array([t[2] for t in traj]).reshape(1, -1, 1))
             rtg.append(np.array([traj[-1][2]] * (len(traj))).reshape(1, -1, 1))
@@ -106,7 +114,7 @@ def experiment():
     )
     model = model.to(device=device)
 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=3e-5)  # weight_decay=1e-4
+    optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4, weight_decay=1e-4)  # weight_decay=1e-4
 
     trainer = Trainer(
         model=model,
@@ -121,13 +129,13 @@ def experiment():
     arm_new.state_mem = deque(maxlen=arm_new.number_states)
 
     best_avg_distance_eval = float("inf")
-    max_iters = 15
+    max_iters = 100
     for iter in range(max_iters):
-        trainer.train_iteration(num_steps=100)
-        avg_distance_eval = eval_model(arm=arm_new, model=model, evaluation_episodes=10, print_info=False)
+        trainer.train_iteration(num_steps=120)
+        avg_distance_eval = eval_model(arm=arm_new, model=model, evaluation_episodes=20, print_info=False)
         if avg_distance_eval < best_avg_distance_eval:
             best_avg_distance_eval = avg_distance_eval
-            model.save(file_name='dt_trained_2.pth')
+            model.save(file_name='dt_trained.pth')
 
         print(f"Evaluation Score: {avg_distance_eval}")
         print(f"Best Evaluation Score: {best_avg_distance_eval}")

@@ -53,7 +53,7 @@ def train_online():
     trajectory = []
 
     while True:
-        state_ = arm.get_n_state()  # get state
+        state_ = arm.get_state()  # get state
         state = np.append(state_, arm.target[0])  # append target
         state = torch.from_numpy(state).reshape(1, agent.model.state_dim).to(device=agent.device, dtype=torch.float32)
 
@@ -84,6 +84,15 @@ def train_online():
         agent.episode_length += 1
 
         if done:
+            # print("states:")
+            # print(states.to(dtype=torch.float32))
+            # print("actions:")
+            # print(actions.to(dtype=torch.float32))
+            # print("target_return:")
+            # print(target_return.to(dtype=torch.float32))
+            # print("timesteps:")
+            # print(timesteps.to(dtype=torch.long))
+
             arm.reset()
             agent.noise_soft.reset()
             agent.noise_strong.reset()
@@ -111,7 +120,7 @@ def train_online():
 
             # Evaluation
             if agent.num_epoch % agent.evaluate_every_n_epoch == 0 and agent.num_epoch > agent.last_evaluated_epoch:
-                mean_distance_eval = eval_model(arm=arm, model=agent.model, evaluation_episodes=10, print_info=False)
+                mean_distance_eval = eval_model(arm=arm, model=agent.model, evaluation_episodes=20, print_info=False)
                 mean_distance_evaluated_list.append(mean_distance_eval)
                 evaluated_epochs_list.append(agent.num_epoch)
                 agent.last_evaluated_epoch = agent.num_epoch
@@ -159,6 +168,12 @@ def train_online():
             target = agent.generate_target_her()
             arm.update_target(target)
             trajectory = []
+            states = torch.zeros((0, agent.model.state_dim), device=agent.device, dtype=torch.float32)
+            actions = torch.zeros((0, agent.model.act_dim), device=agent.device, dtype=torch.float32)
+            rewards = torch.zeros(0, device=agent.device, dtype=torch.float32)
+            ep_return = 1.
+            target_return = torch.tensor(ep_return, device=agent.device, dtype=torch.float32).reshape(1, 1)
+            timesteps = torch.tensor(0, device=agent.device, dtype=torch.long).reshape(1, 1)
 
             total_time = time.time() - start_time
             avg_episode_time = total_time / agent.n_episodes

@@ -1,5 +1,7 @@
 import torch
 import numpy as np
+import time
+from collections import deque
 
 from robot_env_dt import RoboticArm
 from model_dt import DecisionTransformer
@@ -27,7 +29,9 @@ def eval_model(arm, model, evaluation_episodes=100, print_info=True):
 
     episode_length = 0
     while n_episodes < evaluation_episodes:
-        state = arm.get_n_state()  # get state
+        t1 = time.time()
+        state = arm.get_state()  # get state
+        # state = arm.get_n_state()  # get state
         state = np.append(state, arm.target[0])  # append target
         state = torch.from_numpy(state).reshape(1, model.state_dim).to(device=device, dtype=torch.float32)
 
@@ -35,7 +39,6 @@ def eval_model(arm, model, evaluation_episodes=100, print_info=True):
         actions = torch.cat([actions, torch.zeros((1, model.act_dim), device=device)], dim=0)
         rewards = torch.cat([rewards, torch.zeros(1, device=device)])
 
-        # print(states)
         action = model.get_action(
             states.to(dtype=torch.float32),
             actions.to(dtype=torch.float32),
@@ -56,6 +59,17 @@ def eval_model(arm, model, evaluation_episodes=100, print_info=True):
         episode_length += 1
 
         if done:
+            # print("states:")
+            # print(states.to(dtype=torch.float32))
+            # print("actions:")
+            # print(actions.to(dtype=torch.float32))
+            # print("target_return:")
+            # print(target_return.to(dtype=torch.float32))
+            # print("timesteps:")
+            # print(timesteps.to(dtype=torch.long))
+            # t2 = time.time()
+            # print(f"dt: {t2 - t1}")
+
             arm.reset()
             n_episodes += 1
 
@@ -115,18 +129,18 @@ def calc_dist_from_goal(obj_pos, target):
 
 if __name__ == "__main__":
     arm_new = RoboticArm()
-    # arm_new.number_states = 1  # 1 state for decision transformer
-    # arm_new.state_mem = deque(maxlen=arm_new.number_states)
+    arm_new.number_states = 1  # 1 state for decision transformer
+    arm_new.state_mem = deque(maxlen=arm_new.number_states)
 
     model = DecisionTransformer(
         state_dim=len(arm_new .joints) * arm_new.number_states + 1,
         act_dim=len(arm_new .joints),
         max_length=10,
         max_ep_len=10,
-        hidden_size=32,
+        hidden_size=128,
         n_layer=3,
         n_head=1,
-        n_inner=4 * 32,
+        n_inner=4 * 128,
         activation_function='relu',
         n_positions=1024,
         resid_pdrop=0.1,
@@ -134,7 +148,7 @@ if __name__ == "__main__":
     )
 
     # checkpoint = torch.load("./weights/dt_random.pth", map_location=torch.device('cpu'))
-    checkpoint = torch.load("./weights/dt_trained_2.pth", map_location=torch.device('cpu'))
+    checkpoint = torch.load("./weights/dt_trained.pth", map_location=torch.device('cpu'))
     model.load_state_dict(checkpoint['state_dict'])
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

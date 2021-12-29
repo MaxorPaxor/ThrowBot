@@ -19,7 +19,7 @@ class Agent:
 
         # HER
         self.her = arm.her
-        self.k = 4
+        self.k = 4  # 4
         self.generate_targets_factor_radius = 1.0
 
         # Dynamics
@@ -31,7 +31,7 @@ class Agent:
             self.n_states += 1
 
         # Buffer
-        self.MAX_MEMORY = 50_000
+        self.MAX_MEMORY = 100_000
         self.memory = deque(maxlen=int(self.MAX_MEMORY))  # popleft()
         if load_mem:
             self.memory = pickle.load(open('data/memory.pkl', 'rb'))
@@ -42,16 +42,16 @@ class Agent:
         self.noise_soft = OUActionNoise(mu=np.zeros(self.n_actions), sigma=0.4, dt=2e-2, theta=0.1)
         # self.noise_soft = OUActionNoise(mu=np.zeros(self.n_actions), sigma=0.0, dt=0e-2, theta=0.0)
         self.exploration_flag = True
-        self.epsilon_arm = 0  # 50
+        self.epsilon_arm = 30  # 50
         self.soft_exploration_rate = 50
         self.epsilon_arm_decay = 1e-05
         self.exploration_open_gripper = 0
         self.update_exploration()
 
         # Learning Params
-        self.LR = 3e-04
+        self.LR = 1e-04
         self.BATCH_SIZE = 128
-        self.num_mini_batches_per_training = 40  # 40
+        self.num_mini_batches_per_training = 10  # 40
         self.train_every_n_episode = 16  # 16
         self.n_episodes = 0
         self.episode_length = 0
@@ -90,6 +90,14 @@ class Agent:
         self.model = self.model.to(device=self.device)
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.LR)  # weight_decay=1e-4
 
+        self.trainer = Trainer(
+            model=self.model,
+            optimizer=self.optimizer,
+            batch_size=self.BATCH_SIZE,
+            get_batch=self.get_batch,
+            loss_fn=lambda s_hat, a_hat, r_hat, s, a, r: torch.mean((a_hat - a) ** 2)
+        )
+
         if load_nn:
             self.model.load()
 
@@ -103,7 +111,7 @@ class Agent:
             self.epsilon_arm = self.epsilon_arm * (1 - self.epsilon_arm_decay)
             # self.soft_exploration_rate = self.soft_exploration_rate * (1 - self.epsilon_arm_decay)
         else:
-            self.epsilon_arm = 0
+            self.epsilon_arm = 3
             # self.soft_exploration_rate = 20
 
             # Decide if next episode will have exploration
@@ -194,16 +202,7 @@ class Agent:
         """
 
         if len(self.memory) > self.BATCH_SIZE and self.n_episodes % self.train_every_n_episode == 0:
-            for _ in range(self.num_mini_batches_per_training):
-
-                trainer = Trainer(
-                    model=self.model,
-                    optimizer=self.optimizer,
-                    batch_size=self.BATCH_SIZE,
-                    get_batch=self.get_batch,
-                    loss_fn=lambda s_hat, a_hat, r_hat, s, a, r: torch.mean((a_hat - a) ** 2)
-                )
-                trainer.train_iteration(num_steps=100)
+            self.trainer.train_iteration(num_steps=self.num_mini_batches_per_training)
             self.num_epoch += 1
 
     def get_action(self, states, actions, rewards, target_return, timesteps):
@@ -267,7 +266,7 @@ class Agent:
 
         # Create new memory buffer
         for trg in target_list:
-            print(f"Target: {trg}")
+            # print(f"Target: {trg}")
             new_trajectory = []
             for old_tuple in trajectory:  # (state, action, reward, done, success)
                 state = np.append(old_tuple[0], trg[0])
@@ -281,7 +280,7 @@ class Agent:
 
                 new_trajectory.append([state, action, reward, done])
 
-            print(new_trajectory)
+            # print(new_trajectory)
             self.remember(new_trajectory)
 
     @staticmethod

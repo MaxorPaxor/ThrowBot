@@ -222,8 +222,9 @@ class RoboticArm:
 
         # Make sure that the memory is fully filled
         # If not enough states sampled, then fill with the same state
-        while len(self.state_mem) != self.number_states:
-            self.state_mem.append(self.angles)
+        # Used for n states
+        # while len(self.state_mem) != self.number_states:
+        #     self.state_mem.append(self.angles)
 
     def link_states_callback(self, msg):
         """
@@ -279,7 +280,8 @@ class RoboticArm:
             idx = self.joint_names.index(joint)
             angles.append(self.angles[idx])
 
-        state = list(angles) + list(self.velocity)
+        # state = list(angles) + list(self.velocity)
+        state = np.array(angles)
 
         return state
 
@@ -367,7 +369,7 @@ class RoboticArm:
 
     def wait_for_object_to_touch_ground(self):
         t1 = time.time()
-        while not self.object_height <= 0.05 * np.sqrt(2):  # Make sure object is on the ground
+        while not self.object_height <= 0.05 * np.sqrt(2) * 1.0:  # Make sure object is on the ground
             time.sleep(0.005)
             if time.time() - t1 > 3:  # timeout
                 break

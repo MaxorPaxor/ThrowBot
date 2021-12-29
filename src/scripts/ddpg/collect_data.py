@@ -33,8 +33,9 @@ def collect_data():
     agent.epsilon_arm = 100  # 50
     agent.soft_exploration_rate = 0
     agent.epsilon_arm_decay = 0
-    agent.MAX_MEMORY = 100_000
+    agent.MAX_MEMORY = 10_000
     agent.memory = deque(maxlen=int(agent.MAX_MEMORY))  # collect 100k transitions
+    agent.k = 1
 
     start_time = time.time()
     total_time = 0
