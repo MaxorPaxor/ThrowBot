@@ -2,16 +2,18 @@ import torch
 import numpy as np
 import time
 from collections import deque
+import matplotlib.pyplot as plt
 
 from robot_env_dt import RoboticArm
 from model_dt import DecisionTransformer
 
 
-def eval_model(arm, model, evaluation_episodes=100, print_info=True):
+def eval_model(arm, model, evaluation_episodes=100, print_info=True, plot=True):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.eval()
 
     reward_list = []
+    target_list = []
     distance_from_target_list = []
     average_distance = None
     n_episodes = 0
@@ -19,6 +21,7 @@ def eval_model(arm, model, evaluation_episodes=100, print_info=True):
     x = np.random.rand() * 2 + 0.5
     target = np.array([x, 0.0, 0.0])
     arm.update_target(target)
+    target_list.append(x)
 
     states = torch.zeros((0, model.state_dim), device=device, dtype=torch.float32)
     actions = torch.zeros((0, model.act_dim), device=device, dtype=torch.float32)
@@ -28,13 +31,13 @@ def eval_model(arm, model, evaluation_episodes=100, print_info=True):
     timesteps = torch.tensor(0, device=device, dtype=torch.long).reshape(1, 1)
 
     episode_length = 0
+
     while n_episodes < evaluation_episodes:
+
         t1 = time.time()
         state = arm.get_state()  # get state
-        # state = arm.get_n_state()  # get state
         state = np.append(state, arm.target[0])  # append target
         state = torch.from_numpy(state).reshape(1, model.state_dim).to(device=device, dtype=torch.float32)
-
         states = torch.cat([states, state], dim=0)
         actions = torch.cat([actions, torch.zeros((1, model.act_dim), device=device)], dim=0)
         rewards = torch.cat([rewards, torch.zeros(1, device=device)])
@@ -51,11 +54,13 @@ def eval_model(arm, model, evaluation_episodes=100, print_info=True):
         action = action.detach().cpu().numpy()
         # print(action)
 
+        t2 = time.time()
+        # print(f"dt state to action: {t2 - t1}")
         reward, done, termination_reason, obj_pos, success = arm.step(action)  # perform action and get new state
         rewards[-1] = reward
         target_return = torch.cat([target_return, target_return[0, -1].reshape(1, 1)], dim=1)
         timesteps = torch.cat(
-            [timesteps, torch.ones((1, 1), device=device, dtype=torch.long) * (episode_length + 1)], dim=1)
+            [timesteps, torch.ones((1, 1), device=device, dtype=torch.long) * (episode_length+1)], dim=1)
         episode_length += 1
 
         if done:
@@ -105,6 +110,7 @@ def eval_model(arm, model, evaluation_episodes=100, print_info=True):
             x = np.random.rand() * 2 + 0.5
             target = np.array([x, 0.0, 0.0])
             arm.update_target(target)
+            target_list.append(x)
 
             states = torch.zeros((0, model.state_dim), device=device, dtype=torch.float32)
             actions = torch.zeros((0, model.act_dim), device=device, dtype=torch.float32)
@@ -113,6 +119,17 @@ def eval_model(arm, model, evaluation_episodes=100, print_info=True):
             target_return = torch.tensor(ep_return, device=device, dtype=torch.float32).reshape(1, 1)
             timesteps = torch.tensor(0, device=device, dtype=torch.long).reshape(1, 1)
 
+    if plot:
+        fig = plt.figure()
+        ax = fig.add_subplot(1, 1, 1)
+        plt.title('Evaluation')
+        plt.xlabel('Target')
+        plt.ylabel('Average distance from target')
+
+        ax.scatter(target_list[:-1], distance_from_target_list)
+        plt.show()
+
+    print('\n')
     return average_distance
 
 
@@ -154,4 +171,4 @@ if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device=device)
 
-    eval_model(arm=arm_new, model=model)
+    eval_model(arm=arm_new, model=model, evaluation_episodes=200, plot=True)

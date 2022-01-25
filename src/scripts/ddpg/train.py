@@ -9,9 +9,9 @@ from eval_model import eval_model
 
 
 # LOAD_NN = True
-# LOAD_MEMORY = True
+LOAD_MEMORY = True
 LOAD_NN = False
-LOAD_MEMORY = False
+# LOAD_MEMORY = False
 
 
 def train():

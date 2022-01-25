@@ -47,7 +47,6 @@ def train_online():
     target_return = torch.tensor(ep_return, device=agent.device, dtype=torch.float32).reshape(1, 1)
     timesteps = torch.tensor(0, device=agent.device, dtype=torch.long).reshape(1, 1)
 
-
     target = agent.generate_target_her()
     arm.update_target(target)
     trajectory = []
@@ -78,7 +77,7 @@ def train_online():
         timesteps = torch.cat(
             [timesteps, torch.ones((1, 1), device=agent.device, dtype=torch.long) * (agent.episode_length + 1)], dim=1)
 
-        trajectory.append([state_, action, reward, done, success])
+        trajectory.append((state_, action, reward, done, success))
         # [(state, action, reward, done)_i]
 
         agent.episode_length += 1

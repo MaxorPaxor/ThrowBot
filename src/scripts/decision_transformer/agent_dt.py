@@ -33,14 +33,13 @@ class Agent:
         # Buffer
         self.MAX_MEMORY = 100_000
         self.memory = deque(maxlen=int(self.MAX_MEMORY))  # popleft()
+        self.transitions = 0
         if load_mem:
             self.memory = pickle.load(open('data/memory.pkl', 'rb'))
 
         # Exploration
-        self.noise_strong = OUActionNoise(mu=np.zeros(self.n_actions), sigma=0.8, dt=4e-2, theta=0.0)
-        # self.noise_strong = OUActionNoise(mu=np.zeros(self.n_actions), sigma=0.0, dt=0e-2, theta=0.0)
+        self.noise_strong = OUActionNoise(mu=np.zeros(self.n_actions), sigma=1.0, dt=8e-1, theta=0)  # dt=4e-2
         self.noise_soft = OUActionNoise(mu=np.zeros(self.n_actions), sigma=0.4, dt=2e-2, theta=0.1)
-        # self.noise_soft = OUActionNoise(mu=np.zeros(self.n_actions), sigma=0.0, dt=0e-2, theta=0.0)
         self.exploration_flag = True
         self.epsilon_arm = 30  # 50
         self.soft_exploration_rate = 50
@@ -115,7 +114,7 @@ class Agent:
             # self.soft_exploration_rate = 20
 
             # Decide if next episode will have exploration
-        if random.randint(0, 100) < self.epsilon_arm:
+        if random.randint(0, 100) <= self.epsilon_arm:
             self.exploration_flag = True
             self.exploration_open_gripper = random.randint(0, int(self.arm.number_steps - 1))
         else:
@@ -127,6 +126,7 @@ class Agent:
         """
 
         self.memory.append(trajectory)  # popleft if MAX_MEMORY is reached
+        self.transitions += len(trajectory)
 
     def forget(self):
         """
@@ -201,7 +201,7 @@ class Agent:
         Call for a DDPG train step
         """
 
-        if len(self.memory) > self.BATCH_SIZE and self.n_episodes % self.train_every_n_episode == 0:
+        if self.transitions > self.BATCH_SIZE and self.n_episodes % self.train_every_n_episode == 0:
             self.trainer.train_iteration(num_steps=self.num_mini_batches_per_training)
             self.num_epoch += 1
 
@@ -248,6 +248,23 @@ class Agent:
         final_move = torch.clip(mu_prime, min=-1, max=1)
         return final_move
 
+    def get_action_random(self):
+        """
+        Inference state and get action from the policy.
+        Generate noise and use exploration methods
+        """
+
+        noise_strong = torch.tensor(self.noise_strong(), dtype=torch.float).to(self.device)
+        mu_prime = noise_strong
+
+        if self.episode_length >= self.exploration_open_gripper:
+            mu_prime[-1] = -1.0  # Open gripper
+        else:
+            mu_prime[-1] = 1.0  # Keep gripper closed
+
+        final_move = torch.clip(mu_prime, min=-1, max=1)
+        return final_move
+
     def generate_her_memory(self, trajectory, obj_final_pos):
         """
         Hindsight Experience Replay (HER) modification to the current buffer.
@@ -280,6 +297,7 @@ class Agent:
 
                 new_trajectory.append([state, action, reward, done])
 
+            # print("Traj")
             # print(new_trajectory)
             self.remember(new_trajectory)
 

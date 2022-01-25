@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# license removed for brevity
 
 import rospy
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
@@ -14,11 +13,11 @@ import time
 class RoboticArm:
     def __init__(self):
         # Global params
-        self.UPDATE_RATE = 20  # HZ
-        self.total_time = 0.5  # sec
-        self.number_steps = self.total_time * self.UPDATE_RATE
+        self.UPDATE_RATE = 1  # HZ
+        self.total_time = 2.0  # sec
+        self.number_steps = int(self.total_time * self.UPDATE_RATE)
         self.no_rotation = True
-        self.smooth_factor = 0.5
+        self.smooth_factor = 0.1  # 10Hz, 0.5sec, 0.5sf
 
         # Init attributes
         self.object_distance = 0
@@ -48,7 +47,7 @@ class RoboticArm:
                                     'joint_5_b', 'joint_6_t', 'finger_joint'])
             self.max_speed = np.array([455, 385, 520, 550, 550, 1000, 1])  # deg/s
 
-        self.max_speed_factor = 0.8  # % of max speed for safety reasons
+        self.max_speed_factor = 0.95  # % of max speed for safety reasons
 
         # Init connections
         # Publish
@@ -185,12 +184,33 @@ class RoboticArm:
             # dt = 0.02
 
         # Current_position + NN_velocity_output(-1 < V < +1) * max_speed(rd/s) * time(1/frequency)
-        point.positions.append(self.angles[1] + vel_1 * 1.0 / self.UPDATE_RATE)
-        point.positions.append(self.angles[2] + vel_2 * 1.0 / self.UPDATE_RATE)
-        point.positions.append(self.angles[3] + vel_3 * 1.0 / self.UPDATE_RATE)
-        point.positions.append(self.angles[4] + vel_4 * 1.0 / self.UPDATE_RATE)
-        point.positions.append(self.angles[5] + vel_5 * 1.0 / self.UPDATE_RATE)
-        point.positions.append(self.angles[6] + vel_6 * 1.0 / self.UPDATE_RATE)
+        pos_1 = self.angles[1] + vel_1 * 1.0 / self.UPDATE_RATE
+        pos_2 = self.angles[2] + vel_2 * 1.0 / self.UPDATE_RATE
+        pos_3 = self.angles[3] + vel_3 * 1.0 / self.UPDATE_RATE
+        pos_4 = self.angles[4] + vel_4 * 1.0 / self.UPDATE_RATE
+        pos_5 = self.angles[5] + vel_5 * 1.0 / self.UPDATE_RATE
+        pos_6 = self.angles[6] + vel_6 * 1.0 / self.UPDATE_RATE
+
+        # Boundaries j3 -0.5 - 1.8 / j5 -1.7 - 1.4
+        if pos_2 < -0.5:
+            pos_2 = -0.5
+        if pos_2 > 0.5:
+            pos_2 = 0.5
+        if pos_3 < -0.5:
+            pos_3 = -0.5
+        if pos_3 > 1.8:
+            pos_3 = 1.8
+        if pos_5 < -1.7:
+            pos_5 = -1.7
+        if pos_5 > 1.4:
+            pos_5 = 1.4
+
+        point.positions.append(pos_1)
+        point.positions.append(pos_2)
+        point.positions.append(pos_3)
+        point.positions.append(pos_4)
+        point.positions.append(pos_5)
+        point.positions.append(pos_6)
         point.positions.append(gripper)
 
         point.velocities.append(vel_1)
@@ -219,12 +239,6 @@ class RoboticArm:
 
         self.angles = msg.position
         self.state_mem.append(self.angles)
-
-        # Make sure that the memory is fully filled
-        # If not enough states sampled, then fill with the same state
-        # Used for n states
-        # while len(self.state_mem) != self.number_states:
-        #     self.state_mem.append(self.angles)
 
     def link_states_callback(self, msg):
         """
@@ -274,8 +288,9 @@ class RoboticArm:
         Returns the state of the arm to the RL algo
         """
 
-        angles = []
+        # rospy.wait_for_message("/motoman_gp8/joint_states", JointState)
 
+        angles = []
         for joint in self.joints:
             idx = self.joint_names.index(joint)
             angles.append(self.angles[idx])
@@ -290,16 +305,17 @@ class RoboticArm:
         Returns the last 3 states of the arm to the RL algo
         """
 
-        state = []
+        while len(self.state_mem) != self.number_states:
+            time.sleep(0.05)  # Make sure the buffer is full with n states
 
-        if len(self.state_mem) != self.number_states:
-            time.sleep(0.05)  # Make sure the buffer is full with 3 states
+        state = []
 
         for s in self.state_mem:
             angles = []
             for joint in self.joints:
                 idx = self.joint_names.index(joint)
                 angles.append(s[idx])
+
             state += angles
 
         return np.array(state)
@@ -380,7 +396,8 @@ class RoboticArm:
         Returns reward, done flag and termination reason
         """
         velocity_vector = self.proj_on_max_speed(velocity_vector)  # Rescale for maximum speed
-        velocity_vector = self.smooth_velocity(velocity_vector)  # Apply complimentary filter on velocity vector
+        if self.curr_step > 0:  # Not of first step
+            velocity_vector = self.smooth_velocity(velocity_vector)  # Apply complimentary filter on velocity vector
 
         if self.no_rotation:
             self.velocity = velocity_vector
@@ -393,8 +410,8 @@ class RoboticArm:
         trajectory = self.vel_trajectory(vel_1, vel_2, vel_3, vel_4, vel_5, vel_6, gripper)
         self.pub_command.publish(trajectory)
 
-        # self.rate.sleep()
-        time.sleep(1.0 / self.UPDATE_RATE)
+        self.rate.sleep()
+        # time.sleep(1.0 / self.UPDATE_RATE)
         self.curr_time += 1.0 / self.UPDATE_RATE
         self.curr_step += 1
 
@@ -410,6 +427,8 @@ class RoboticArm:
             # If object is released, wait for it to fall and reward the action
             if gripper < 0:
                 termination_reason = "Gripper was opened with value: {}".format(gripper)
+                trajectory = self.vel_trajectory(0, 0, 0, 0, 0, 0, gripper)
+                self.pub_command.publish(trajectory)
                 self.wait_for_object_to_touch_ground()
 
                 # Successful throw reward:
@@ -516,18 +535,13 @@ class RoboticArm:
         Tests
         """
 
-        # self.reset()
-        # swing = self.trajectory(j2=0.3, j3=0.5, j5=-0.2, gripper=0.1, dt=0.05)
-        # self.pub_command.publish(swing)
-        # time.sleep(0.1)
-        # open = self.trajectory(j2=0.3, j3=0.5, j5=-0.2, gripper=-0.1, dt=0.05)
-        # self.pub_command.publish(open)
-        # time.sleep(1)
+        self.reset()
 
-        swing = self.trajectory(gripper=-0.1, dt=0.2)
+        swing = self.trajectory(j1=0.0, j2=1.5, j3=-0.4, j4=0.0, j5=1.4, j6=0.0, gripper=1.0)
+        # boundaries j2 -0.5 - 0.5 / j3 -0.5 - 1.8 / j5 -1.7 - 1.4
         self.pub_command.publish(swing)
         time.sleep(2)
-        self.reset()
+        # self.reset()
 
 
 if __name__ == '__main__':

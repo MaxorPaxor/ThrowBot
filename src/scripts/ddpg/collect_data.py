@@ -33,9 +33,9 @@ def collect_data():
     agent.epsilon_arm = 100  # 50
     agent.soft_exploration_rate = 0
     agent.epsilon_arm_decay = 0
-    agent.MAX_MEMORY = 10_000
+    agent.MAX_MEMORY = 1_000
     agent.memory = deque(maxlen=int(agent.MAX_MEMORY))  # collect 100k transitions
-    agent.k = 1
+    agent.k = 3
 
     start_time = time.time()
     total_time = 0
@@ -47,10 +47,12 @@ def collect_data():
         temp_mem = []
 
     while True:
-        state = arm.get_n_state()  # get state
+        # state = arm.get_n_state()  # get state
+        t1 = time.time()
+        state = arm.get_state()  # get state
         action = agent.get_action(state)  # get action
         reward, done, termination_reason, obj_pos, success = arm.step(action)  # perform action and get new state
-        state_new = arm.get_n_state()  # get new state
+        state_new = arm.get_state()  # get new state
 
         if agent.her:
             temp_mem.append((state, action, reward, state_new, done, success))
@@ -58,6 +60,8 @@ def collect_data():
             agent.remember(state, action, reward, state_new, done)
 
         agent.episode_length += 1
+        t2 = time.time()
+        print(f"dt: {t2-t1}")
 
         if done:
             arm.reset()
@@ -111,7 +115,7 @@ def collect_data():
             print(info)
             print('=======================================================')
 
-            pickle.dump(agent.memory, open('./data/memory_random_2.pkl', 'wb'))
+            pickle.dump(agent.memory, open(f'./data/random_{agent.MAX_MEMORY}trans_1s_k3.pkl', 'wb'))
             if len(agent.memory) == agent.MAX_MEMORY:
                 break
 

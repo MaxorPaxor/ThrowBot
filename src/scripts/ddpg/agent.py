@@ -3,6 +3,7 @@ import random
 import numpy as np
 from collections import deque
 import pickle
+import itertools
 
 from model.model import Critic, Actor, DDPGTrainer
 from model.noise import OUActionNoise
@@ -29,16 +30,16 @@ class Agent:
             self.n_states += 1
 
         # Buffer
-        self.MAX_MEMORY = 300_000
+        self.MAX_MEMORY = 10_000
         self.memory = deque(maxlen=int(self.MAX_MEMORY))  # popleft()
         if load_mem:
-            self.memory = pickle.load(open('data/memory.pkl', 'rb'))
+            self.memory = pickle.load(open('data/memory_random_10k_3s.pkl', 'rb'))
+            # self.memory = deque(itertools.islice(self.memory, 0, int(0.85*len(self.memory))))
 
         # Exploration
-        self.noise_strong = OUActionNoise(mu=np.zeros(self.n_actions), sigma=0.8, dt=4e-2, theta=0.0)
-        # self.noise_strong = OUActionNoise(mu=np.zeros(self.n_actions), sigma=0.0, dt=0e-2, theta=0.0)
+        # self.noise_strong = OUActionNoise(mu=np.zeros(self.n_actions), sigma=0.8, dt=4e-2, theta=0.0)
+        self.noise_strong = OUActionNoise(mu=np.zeros(self.n_actions), sigma=1.5, dt=4e-2, theta=0.0)
         self.noise_soft = OUActionNoise(mu=np.zeros(self.n_actions), sigma=0.4, dt=2e-2, theta=0.1)
-        # self.noise_soft = OUActionNoise(mu=np.zeros(self.n_actions), sigma=0.0, dt=0e-2, theta=0.0)
         self.exploration_flag = True
         self.epsilon_arm = 0  # 50
         self.soft_exploration_rate = 50
@@ -140,7 +141,7 @@ class Agent:
         """
 
         if len(self.memory) > self.BATCH_SIZE and self.n_episodes % self.train_every_n_episode == 0:
-            for _ in range(self.num_mini_batches_per_training):
+            for i in range(self.num_mini_batches_per_training):
                 mini_sample = random.sample(self.memory, self.BATCH_SIZE)  # list of tuples
                 states, actions, rewards, next_states, dones = zip(*mini_sample)
                 self.trainer_ddpg.train_step(states, actions, rewards, next_states, dones)
@@ -266,11 +267,8 @@ class Agent:
             # print(f"Target: {trg}")
 
             for old_tuple in tmp_mem:  # (state, action, reward, state_new, done, success)
-                # state = np.concatenate((old_tuple[0], trg))
                 state = np.append(old_tuple[0], trg[0])
-
                 action = old_tuple[1]
-
                 success = old_tuple[5]
                 if success:
                     reward = self.arm.reward_sparse(obj_pos=obj_final_pos, target=trg)

@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 import torch.nn as nn
 import os
@@ -154,5 +153,3 @@ class DecisionTransformer(nn.Module):
     def load(self):
         checkpoint = torch.load("./weights/dt.pth", map_location=torch.device('cpu'))
         self.load_state_dict(checkpoint['state_dict'])
-
-

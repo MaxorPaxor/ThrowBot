@@ -393,6 +393,6 @@ class DDPGTrainer:
         # for n, p in enumerate(self.actor.parameters()):
             # print(n)
             # print(p)
-            # if n == 9:
+            # if n == 5:
             #     print(p)
 

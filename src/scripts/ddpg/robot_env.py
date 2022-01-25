@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# license removed for brevity
 
 import rospy
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
@@ -222,8 +221,8 @@ class RoboticArm:
 
         # Make sure that the memory is fully filled
         # If not enough states sampled, then fill with the same state
-        while len(self.state_mem) != self.number_states:
-            self.state_mem.append(self.angles)
+        # while len(self.state_mem) != self.number_states:
+        #     self.state_mem.append(self.angles)
 
     def link_states_callback(self, msg):
         """
@@ -272,14 +271,14 @@ class RoboticArm:
         """
         Returns the state of the arm to the RL algo
         """
-
         angles = []
 
         for joint in self.joints:
             idx = self.joint_names.index(joint)
             angles.append(self.angles[idx])
 
-        state = list(angles) + list(self.velocity)
+        # state = list(angles) + list(self.velocity)
+        state = np.array(angles)
 
         return state
 
@@ -290,8 +289,8 @@ class RoboticArm:
 
         state = []
 
-        if len(self.state_mem) != self.number_states:
-            time.sleep(0.05)  # Make sure the buffer is full with 3 states
+        while len(self.state_mem) != self.number_states:
+            time.sleep(0.05)  # Make sure the buffer is full with n states
 
         for s in self.state_mem:
             angles = []
