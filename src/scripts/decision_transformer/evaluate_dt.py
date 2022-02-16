@@ -4,8 +4,8 @@ import time
 from collections import deque
 import matplotlib.pyplot as plt
 
-from robot_env_dt import RoboticArm
-from model_dt import DecisionTransformer
+from env.robot_env_dt import RoboticArm
+from agent.model_dt.model_dt import DecisionTransformer
 
 
 def eval_model(arm, model, evaluation_episodes=100, print_info=True, plot=True):
@@ -18,7 +18,8 @@ def eval_model(arm, model, evaluation_episodes=100, print_info=True, plot=True):
     average_distance = None
     n_episodes = 0
 
-    x = np.random.rand() * 2 + 0.5
+    # x = np.random.rand() * 2 + 0.5
+    x = 2
     target = np.array([x, 0.0, 0.0])
     arm.update_target(target)
     target_list.append(x)
@@ -66,8 +67,8 @@ def eval_model(arm, model, evaluation_episodes=100, print_info=True, plot=True):
         if done:
             # print("states:")
             # print(states.to(dtype=torch.float32))
-            # print("actions:")
-            # print(actions.to(dtype=torch.float32))
+            print("actions:")
+            print(actions.to(dtype=torch.float32))
             # print("target_return:")
             # print(target_return.to(dtype=torch.float32))
             # print("timesteps:")
@@ -107,7 +108,8 @@ def eval_model(arm, model, evaluation_episodes=100, print_info=True, plot=True):
                 print(f" Evaluating Model... {int(100*n_episodes/evaluation_episodes)} %", end="\r")
 
             episode_length = 0
-            x = np.random.rand() * 2 + 0.5
+            # x = np.random.rand() * 2 + 0.5
+            x = 2
             target = np.array([x, 0.0, 0.0])
             arm.update_target(target)
             target_list.append(x)

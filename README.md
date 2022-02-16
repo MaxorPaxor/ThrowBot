@@ -6,9 +6,9 @@ In this project we relay on [Deep Deterministic Policy Gradients](https://arxiv.
 and [Hindsight Experience Replay](https://arxiv.org/pdf/1707.01495.pdf) methods to teach a robotic arm to throw objects.
 
 <p align="center">
-<img src="gif/arm_gif.gif">
+<img src="gif/ThrowBotHer.gif">
 </p>
-<h5 align="center">Motoman-gp8 throwing 0.5kg box</h5>
+<h5 align="center">Motoman-gp8 throwing 0.5kg box at generated targets</h5>
 
 ## Overview
 

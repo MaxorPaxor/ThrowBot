@@ -4,10 +4,10 @@ import pickle
 from collections import deque
 import pandas as pd
 
-from model_dt import DecisionTransformer
-from trainer import Trainer
+from agent.model_dt.model_dt import DecisionTransformer
+from agent.trainer import Trainer
 from evaluate_dt import eval_model
-from robot_env_dt import RoboticArm
+from env.robot_env_dt import RoboticArm
 
 
 def run():
@@ -49,7 +49,8 @@ def run():
     # state_mean, state_std = np.mean(states_, axis=0), np.std(states_, axis=0) + 1e-6
 
     # load dataset
-    trajectories = pickle.load(open('./data/memory_random_500traj_1Hz_k-3.pkl', 'rb'))
+    session_name = 'memory_random_1000traj_20Hz_k-3.pkl'
+    trajectories = pickle.load(open(f'./data/{session_name}', 'rb'))
     # (state, action, reward, done)
 
     fails = 0
@@ -166,7 +167,7 @@ def run():
         max_iters = 75
         for iter in range(max_iters):
             trainer.train_iteration(num_steps=100)
-            avg_distance_eval = eval_model(arm=arm_new, model=model, evaluation_episodes=30,
+            avg_distance_eval = eval_model(arm=arm_new, model=model, evaluation_episodes=25,
                                            print_info=False,
                                            plot=False)
             evaluation_list.append(avg_distance_eval)
@@ -184,7 +185,7 @@ def run():
         df[experiment] = evaluation_list
         print(df)
 
-    df.to_csv('results/experiment_dt_offline_1k.csv', index=False)
+    df.to_csv(f'results/{session_name}_results.csv', index=False)
 
 
 if __name__ == '__main__':

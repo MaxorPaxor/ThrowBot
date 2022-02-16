@@ -19,12 +19,22 @@
       - finger_joint
 
   gains:
-    joint_1_s: { p: 10000, d: 100, i: 5, i_clamp: 1 }
-    joint_2_l: { p: 10000, d: 100, i: 5, i_clamp: 1 }
-    joint_3_u: { p: 10000, d: 100, i: 5, i_clamp: 1 }
-    joint_4_r: { p: 10000, d: 100, i: 5, i_clamp: 1 }
-    joint_5_b: { p: 2000, d: 100, i: 5, i_clamp: 1 }  # 2000
-    joint_6_t: { p: 10000, d: 100, i: 5, i_clamp: 1 }
-    finger_joint: { p: 50, d: 0.05, i: 0.0, i_clamp: 0.0}
-#    finger_joint: { p: 50, d: 0.05, i: 0, i_clamp: 0} <release_tolerance>1e-3</release_tolerance>
+    joint_1_s: { p: 500, d: 100, i: 5, i_clamp: 1 }
+    joint_2_l: { p: 1500, d: 300, i: 5, i_clamp: 1 }  # p500d70
+    joint_3_u: { p: 1500, d: 300, i: 5, i_clamp: 1 }  # p500d70
+    joint_4_r: { p: 400, d: 85, i: 5, i_clamp: 1 }
+    joint_5_b: { p: 100, d: 15, i: 0.5, i_clamp: 0.1 }  # p40d2.5
+    joint_6_t: { p: 10, d: 1.5, i: 0.5, i_clamp: 0.1 }
+    finger_joint: { p: 50, d: 0.01, i: 0.0, i_clamp: 0.0}  #p50d0.05i0
+
+
+#  gains:
+#    joint_1_s: { p: 1000, d: 100, i: 5, i_clamp: 1 }
+#    joint_2_l: { p: 3000, d: 300, i: 5, i_clamp: 1 }  # p500d70
+#    joint_3_u: { p: 3000, d: 300, i: 5, i_clamp: 1 }  # p500d70
+#    joint_4_r: { p: 700, d: 85, i: 5, i_clamp: 1 }
+#    joint_5_b: { p: 150, d: 15, i: 0.5, i_clamp: 0.1 }  # p40d2.5
+#    joint_6_t: { p: 15, d: 1.5, i: 0.5, i_clamp: 0.1 }
+#    finger_joint: { p: 50, d: 0.01, i: 0.0, i_clamp: 0.0}  #p50d0.05i0
+
 
