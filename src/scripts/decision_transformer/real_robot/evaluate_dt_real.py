@@ -4,16 +4,30 @@ import time
 import argparse
 from collections import deque
 
-from env.robot_env_dt_real import RoboticArm
+from real_robot.robot_env_dt_real import RoboticArm
 from agent.model_dt.model_dt import DecisionTransformer
 
+from robotiqGripper import RobotiqGripper
 
-def eval_model(arm, model, print_info=True):
+
+def eval_model(arm, model, print_info=True, gripper_bool=False):
+
+    if gripper_bool:
+        # Connect to gripper
+        gripper_status = None
+        gripper = RobotiqGripper("/dev/ttyUSB0", slaveaddress=9)
+        gripper._aCoef = -4.7252
+        gripper._bCoef = 1086.8131
+        gripper.closemm = 0
+        gripper.openmm = 860
+        gripper.goTomm(270, 255, 255)
+        print("Gripper is ready")
+
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.eval()
 
     # x = np.random.rand() * 2 + 0.5
-    x = 2
+    x = 1.8
     target = np.array([x, 0.0, 0.0])
     arm.update_target(target)
 
@@ -26,7 +40,7 @@ def eval_model(arm, model, print_info=True):
 
     episode_length = 0
 
-    arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))  
+    arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
     warmup = False
     done = False
     print('---')
@@ -35,7 +49,6 @@ def eval_model(arm, model, print_info=True):
         state = arm.get_state()  # get state
         state = np.append(state, arm.target[0])  # append target
         state = torch.from_numpy(state).reshape(1, model.state_dim).to(device=device, dtype=torch.float32)
-        print(f"State: {state}")
         states = torch.cat([states, state], dim=0)
         actions = torch.cat([actions, torch.zeros((1, model.act_dim), device=device)], dim=0)
         rewards = torch.cat([rewards, torch.zeros(1, device=device)])
@@ -52,11 +65,9 @@ def eval_model(arm, model, print_info=True):
 
         actions[-1] = action
         action = action.detach().cpu().numpy()
-        print(f"Action: {action}")
-
         done, termination_reason = arm.step(action)  # perform action and get new state
 
-        print(f"dt: {t2 - t1}")
+        # print(f"dt: {t2 - t1}")
 
         rewards[-1] = 0.0  # Reward
         target_return = torch.cat([target_return, target_return[0, -1].reshape(1, 1)], dim=1)
@@ -65,14 +76,19 @@ def eval_model(arm, model, print_info=True):
         episode_length += 1
 
         if warmup:
-            time.sleep(0.2)
+            # time.sleep(0.01)
             warmup = False
         else:
-            time.sleep(0.2)
+            # time.sleep(0.01)
+            pass
 
-        print('---')
+        if action[-1] < 0:
+            if gripper_bool:
+                # time.sleep(0.01)
+                gripper.goTomm(350, 255, 255)
 
         if done:
+
             # print("states:")
             # print(states.to(dtype=torch.float32))
             print("actions:")
@@ -94,6 +110,8 @@ def eval_model(arm, model, print_info=True):
 
 
 if __name__ == "__main__":
+    GRIPPER = True
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', type=str, default=False)
     args = parser.parse_args()
@@ -106,6 +124,13 @@ if __name__ == "__main__":
     if args.mode == 'reset':
         arm_new.step(np.array([0.0, 0.0, 0.0, 1.0]))
         arm_new.reset_arm()
+        if GRIPPER:
+            gripper = RobotiqGripper("/dev/ttyUSB0", slaveaddress=9)
+            gripper._aCoef = -4.7252
+            gripper._bCoef = 1086.8131
+            gripper.closemm = 0
+            gripper.openmm = 860
+            gripper.goTomm(270, 255, 255)
 
     elif args.mode == 'throw':
         model = DecisionTransformer(
@@ -130,4 +155,4 @@ if __name__ == "__main__":
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         model = model.to(device=device)
 
-        eval_model(arm=arm_new, model=model)
+        eval_model(arm=arm_new, model=model, gripper_bool=GRIPPER)

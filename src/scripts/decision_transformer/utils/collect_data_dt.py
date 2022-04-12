@@ -58,7 +58,7 @@ def collect_data():
         t2 = time.time()
         # print(f"dt state to action: {t2-t1}")
         # print(f"State: {state}")
-        print(f"Action: {action}")
+        # print(f"Action: {action}")
         reward, done, termination_reason, obj_pos, success = arm.step(action)  # perform action and get new state
 
         temp_mem.append((state, action, reward, done, success))
@@ -119,7 +119,22 @@ def collect_data():
             print(info)
             print('=======================================================')
 
-            pickle.dump(agent.memory, open(f"./data/memory_random_{agent.MAX_MEMORY}traj_{arm.UPDATE_RATE}Hz_k-{agent.k}.pkl", 'wb'))
+            if arm.noise_actions:
+                pickle.dump(agent.memory, open(f"../data/memory_random_"
+                                               f"traj-{agent.MAX_MEMORY}_"
+                                               f"Hz-{arm.UPDATE_RATE}_"
+                                               f"herK-{agent.k}_"
+                                               f"noise-{arm.noise_actions}_"
+                                               f"noise-max-{arm.noise_max}_"
+                                               f"noise-prob-{arm.noise_prob}.pkl", 'wb'))
+
+            else:
+                pickle.dump(agent.memory, open(f"../data/memory_random_"
+                                               f"traj-{agent.MAX_MEMORY}_"
+                                               f"Hz-{arm.UPDATE_RATE}_"
+                                               f"herK-{agent.k}_"
+                                               f"noise-{arm.noise_actions}.pkl", 'wb'))
+
             if len(agent.memory) == agent.MAX_MEMORY:
                 break
 
@@ -138,3 +153,4 @@ def collect_data():
 
 if __name__ == "__main__":
     collect_data()
+

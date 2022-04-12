@@ -4,7 +4,7 @@ import os
 
 import transformers
 
-from trajectory_gpt2 import GPT2Model
+from agent.model_dt.trajectory_gpt2 import GPT2Model
 
 
 class DecisionTransformer(nn.Module):
@@ -49,9 +49,14 @@ class DecisionTransformer(nn.Module):
 
         # note: we don't predict states or returns for the paper
         self.predict_state = torch.nn.Linear(hidden_size, self.state_dim)
-        self.predict_action = nn.Sequential(
-            *([nn.Linear(hidden_size, self.act_dim)] + ([nn.Tanh()] if action_tanh else []))
-        )
+
+        # self.predict_action = nn.Sequential(
+        #     *([nn.Linear(hidden_size, self.act_dim)] + ([nn.Tanh()] if action_tanh else []))
+        # )
+        self.predict_action = nn.Linear(hidden_size, self.act_dim)
+        self.predict_action_activation_m = nn.Tanh()
+        self.predict_action_activation_g = nn.Sigmoid()
+
         self.predict_return = torch.nn.Linear(hidden_size, 1)
 
     def forward(self, states, actions, rewards, returns_to_go, timesteps, attention_mask=None):
@@ -99,7 +104,10 @@ class DecisionTransformer(nn.Module):
         # get predictions
         return_preds = self.predict_return(x[:,2])  # predict next return given state and action
         state_preds = self.predict_state(x[:,2])    # predict next state given state and action
+
         action_preds = self.predict_action(x[:,1])  # predict next action given state
+        action_preds[:, :, :-1] = self.predict_action_activation_m(action_preds[:, :, :-1])
+        action_preds[:, :, -1] = self.predict_action_activation_g(action_preds[:, :, -1])
 
         return state_preds, action_preds, return_preds
 
