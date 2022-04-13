@@ -17,7 +17,7 @@ class RoboticArm:
         self.total_time = 0.5  # sec
         self.number_steps = int(self.total_time * self.UPDATE_RATE)
         self.no_rotation = True
-        self.smooth_factor = 0.0  # 10Hz, 0.5sec, 0.5sf
+        self.smooth_factor = 0  # 10Hz, 0.5sec, 0.5sf
 
         # Init attributes
         self.object_distance = 0
@@ -158,6 +158,8 @@ class RoboticArm:
         """
         Commands robotic arm joints velocities
         """
+        self.curr_time = 0  # sec
+        self.curr_step = 0
 
         trajectory = JointTrajectory()
         point = JointTrajectoryPoint()
@@ -175,7 +177,7 @@ class RoboticArm:
         # trajectory.joint_names.append("finger_joint")
 
         # Current_position + NN_velocity_output(-1 < V < +1) * max_speed(rd/s) * time(1/frequency)
-        pos_1 = -0.785398
+        pos_1 = -1.5707
         pos_2 = 0.5
         pos_3 = -0.3
         pos_4 = 0.0
@@ -228,6 +230,23 @@ class RoboticArm:
         state = np.array(angles)
 
         return state
+
+    def reward_sparse(self, obj_pos=None, target=None):
+        """
+        Sparse reward function - For HER
+        """
+
+        if target is None:
+            target = self.target
+
+        distance = np.sqrt((obj_pos[0] - target[0]) ** 2 +
+                           (obj_pos[1] - target[1]) ** 2)  # +
+        # (obj_pos[2] - target[2]) ** 2)
+
+        if distance <= self.target_radius:  # and obj_pos[0] > self.initial_pos[0]:
+            return 1.0
+        else:
+            return -1.0
 
     def smooth_velocity(self, new_velocity):
         """
@@ -289,7 +308,7 @@ class RoboticArm:
             # If object is released, wait for it to fall and reward the action
             if gripper < self.gripper_thresh:
                 termination_reason = "Gripper was opened with value: {}".format(gripper)
-                done = False  # True
+                done = True  # True
 
             else:
                 termination_reason = "Time is up: {}".format(self.curr_time)

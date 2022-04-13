@@ -552,8 +552,8 @@ class RobotiqGripper(mm.Instrument):
 
 if __name__ == '__main__':
     grip = RobotiqGripper("/dev/ttyUSB0", slaveaddress=9)
-    # grip.reset()
-    # grip.activate()
+    grip.reset()
+    grip.activate()
 
     # Calibrate
     # grip.calibrate(closemm=0, openmm=860)

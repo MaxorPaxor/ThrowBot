@@ -4,8 +4,8 @@ import time
 import argparse
 from collections import deque
 
-from real_robot.robot_env_dt_real import RoboticArm
 from agent.model_dt.model_dt import DecisionTransformer
+from real_robot.robot_env_dt_real import RoboticArm
 
 from robotiqGripper import RobotiqGripper
 
@@ -23,11 +23,13 @@ def eval_model(arm, model, print_info=True, gripper_bool=False):
         gripper.goTomm(270, 255, 255)
         print("Gripper is ready")
 
+    # reset_arm()
+
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.eval()
 
     # x = np.random.rand() * 2 + 0.5
-    x = 1.8
+    x = 0.6
     target = np.array([x, 0.0, 0.0])
     arm.update_target(target)
 
@@ -82,12 +84,15 @@ def eval_model(arm, model, print_info=True, gripper_bool=False):
             # time.sleep(0.01)
             pass
 
-        if action[-1] < 0:
+        if action[-1] < arm.gripper_thresh:
             if gripper_bool:
                 # time.sleep(0.01)
                 gripper.goTomm(350, 255, 255)
+                done = True
 
         if done:
+            time.sleep(2)
+            reset_arm()
 
             # print("states:")
             # print(states.to(dtype=torch.float32))
@@ -109,6 +114,22 @@ def eval_model(arm, model, print_info=True, gripper_bool=False):
     print('\n')
 
 
+def reset_arm():
+    print("Restarting arm...")
+    # time.sleep(2)
+    arm_new.step(np.array([0.0, 0.0, 0.0, 1.0]))
+    arm_new.reset_arm()
+    if GRIPPER:
+        gripper = RobotiqGripper("/dev/ttyUSB0", slaveaddress=9)
+        gripper._aCoef = -4.7252
+        gripper._bCoef = 1086.8131
+        gripper.closemm = 0
+        gripper.openmm = 860
+        gripper.goTomm(270, 255, 255)
+    # time.sleep(2)
+    print("Done.")
+
+
 if __name__ == "__main__":
     GRIPPER = True
 
@@ -122,15 +143,7 @@ if __name__ == "__main__":
     arm_new.state_mem = deque(maxlen=arm_new.number_states)
 
     if args.mode == 'reset':
-        arm_new.step(np.array([0.0, 0.0, 0.0, 1.0]))
-        arm_new.reset_arm()
-        if GRIPPER:
-            gripper = RobotiqGripper("/dev/ttyUSB0", slaveaddress=9)
-            gripper._aCoef = -4.7252
-            gripper._bCoef = 1086.8131
-            gripper.closemm = 0
-            gripper.openmm = 860
-            gripper.goTomm(270, 255, 255)
+        reset_arm()
 
     elif args.mode == 'throw':
         model = DecisionTransformer(
@@ -144,12 +157,12 @@ if __name__ == "__main__":
             n_inner=4 * 128,
             activation_function='relu',
             n_positions=1024,
-            resid_pdrop=0.1,
-            attn_pdrop=0.1,
+            resid_pdrop=0.0,
+            attn_pdrop=0.0,
         )
 
         # checkpoint = torch.load("./weights/dt_random.pth", map_location=torch.device('cpu'))
-        checkpoint = torch.load("dt_trained.pth", map_location=torch.device('cpu'))
+        checkpoint = torch.load("../weights/dt_trained_simulation.pth", map_location=torch.device('cpu'))
         model.load_state_dict(checkpoint['state_dict'])
 
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

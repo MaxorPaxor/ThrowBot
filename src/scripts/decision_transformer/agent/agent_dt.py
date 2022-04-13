@@ -94,7 +94,7 @@ class Agent:
             optimizer=self.optimizer,
             batch_size=self.BATCH_SIZE,
             get_batch=self.get_batch,
-            loss_fn=lambda s_hat, a_hat, r_hat, s, a, r: torch.mean((a_hat - a) ** 2)
+            device=self.device
         )
 
         if load_nn:
@@ -288,12 +288,20 @@ class Agent:
             for old_tuple in trajectory:  # (state, action, reward, done, success)
                 state = np.append(old_tuple[0], trg[0])
                 action = old_tuple[1]
-                success = old_tuple[4]
-                if success:
-                    reward = self.arm.reward_sparse(obj_pos=obj_final_pos, target=trg)
-                else:
-                    reward = old_tuple[2]
                 done = old_tuple[3]
+
+                if len(old_tuple) == 5:
+                    success = old_tuple[4]
+                    if success:
+                        reward = self.arm.reward_sparse(obj_pos=obj_final_pos, target=trg)
+                    else:
+                        reward = old_tuple[2]
+
+                else:
+                    if done:
+                        reward = self.arm.reward_sparse(obj_pos=obj_final_pos, target=trg)
+                    else:
+                        reward = old_tuple[2]
 
                 new_trajectory.append([state, action, reward, done])
 
