@@ -93,9 +93,11 @@ def run():
     dropout = 0.1
     n_positions = 1024  # 1024
 
-    df = pd.DataFrame()
     number_experiments = 1
     for experiment in range(number_experiments):
+        results_cols = ['avg_distance_eval', 'hit_rate', 'loss']
+        df = pd.DataFrame(columns=results_cols)
+
         model = DecisionTransformer(
             state_dim=state_dim,
             act_dim=act_dim,
@@ -130,7 +132,7 @@ def run():
         model_eval = model_eval.to(device=device)
         model.save(file_name='dt_trained.pth')
 
-        optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=0*1e-4)  # weight_decay=1e-4
+        optimizer = torch.optim.AdamW(model.parameters(), lr=3e-5, weight_decay=0*1e-2)  # weight_decay=1e-4
 
         trainer = Trainer(
             model=model,
@@ -146,19 +148,14 @@ def run():
 
         # First evaluation
         evaluation_list = []
-        # avg_distance_eval = eval_model(arm=arm_new, model=model, print_info=False, plot=False)
+        hit_rate_list = []
         avg_distance_eval = None
-        # evaluation_list.append(avg_distance_eval)
         best_avg_distance_eval = avg_distance_eval
 
         # Train
-        max_iters = 50
+        max_iters = 300
         num_of_steps = 50
-
-        # First loss
         loss_list = []
-        # train_loss = trainer.train_iteration(num_steps=1, back_prop=False)
-        # loss_list.append(train_loss)
 
         print('=' * 40)
         for iter in range(max_iters):
@@ -168,8 +165,9 @@ def run():
             # Evaluate
             checkpoint = torch.load("./weights/dt_trained.pth", map_location=torch.device('cpu'))
             model_eval.load_state_dict(checkpoint['state_dict'])
-            avg_distance_eval = eval_model(arm=arm_new, model=model_eval, print_info=False, plot=False)
+            avg_distance_eval, hit_rate = eval_model(arm=arm_new, model=model_eval, print_info=False, plot=False)
 
+            hit_rate_list.append(hit_rate)
             evaluation_list.append(avg_distance_eval)
             evaluation_list_np = np.array(evaluation_list)
             evaluation_var = evaluation_list_np.var()
@@ -181,17 +179,18 @@ def run():
 
             print(f"Experiment: {experiment+1}/{number_experiments}")
             print(f"Iteration: {iter+1}/{max_iters}")
-            print(f"Last Loss: {train_loss}")
-            print(f"Evaluation Score: {avg_distance_eval}")
+            print(f"Evaluation AVG hit-rate: {hit_rate}")
+            print(f"Evaluation AVG distance: {avg_distance_eval}")
             print(f"Var Evaluation: {evaluation_var}")
             print(f"Best Evaluation Score: {best_avg_distance_eval}")
+            print(f"Loss: {train_loss}")
             print('=' * 40)
 
-        df[2*experiment] = evaluation_list
-        df[2*experiment+1] = loss_list
+        df['avg_distance_eval'] = evaluation_list
+        df['hit_rate'] = hit_rate_list
+        df['loss'] = loss_list
         print(df)
-
-    df.to_csv(f'results/{session_name}_results.csv', index=False)
+        df.to_csv(f'results/{session_name}_experiment-{experiment}_results.csv', index=False)
 
 
 if __name__ == '__main__':

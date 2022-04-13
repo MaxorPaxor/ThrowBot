@@ -137,7 +137,7 @@ if __name__ == "__main__":
             state_dim=len(arm_new .joints) * arm_new.number_states + 1,
             act_dim=len(arm_new .joints),
             max_length=10,
-            max_ep_len=10,
+            max_ep_len=16,
             hidden_size=128,
             n_layer=3,
             n_head=1,

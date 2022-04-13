@@ -1,9 +1,12 @@
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from contextlib import contextmanager
 import os
 import sys
 import pandas as pd
+
+matplotlib.use('TkAgg')
 
 
 class Plot:
@@ -16,8 +19,8 @@ class Plot:
         self.axs[1].set_facecolor('#DEDEDE')
         self.axs[2].set_facecolor('#DEDEDE')
 
-    def plot(self, scores, mean_scores, mean_distance_from_target_list, mean_distance_evaluated_list,
-             evaluated_epochs_list):
+    def plot(self, evaluation_list, hit_rate_list):
+        plt.ion()
 
         # New Plot
         with stdout_redirected():
@@ -35,10 +38,8 @@ class Plot:
         self.axs[2].set_ylabel('Mean Evaluation Distance')
 
         # Plot
-        self.axs[0].plot(scores)
-        self.axs[0].plot(mean_scores)
-        self.axs[1].plot(mean_distance_from_target_list)
-        self.axs[2].plot(evaluated_epochs_list, mean_distance_evaluated_list)
+        self.axs[0].plot(evaluation_list)
+        self.axs[1].plot(hit_rate_list)
 
         # X-Y Lim
         # plt.ylim(ymin=-1.2, ymax=1.2)
@@ -48,7 +49,7 @@ class Plot:
 
         # Text
         # axs[0].text(len(scores)-1, scores[-1], str(scores[-1]))
-        self.axs[0].annotate("Mean score: {}".format(mean_scores[-1]),
+        self.axs[0].annotate("Mean Distance: {}".format(evaluation_list[-1]),
                              xy=(0.05, 0.95),
                              xycoords='axes fraction',
                              size=10,
@@ -57,7 +58,7 @@ class Plot:
                              # ec=(1., 0.5, 0.5),
                              fc=(0.95, 0.95, 0.8),))
 
-        self.axs[1].annotate("Mean Distance: {}".format(mean_distance_from_target_list[-1]),
+        self.axs[1].annotate("Hit-Rate: {}".format(hit_rate_list[-1]),
                              xy=(0.05, 0.95),
                              xycoords='axes fraction',
                              size=10,
@@ -66,8 +67,11 @@ class Plot:
                              # ec=(1., 0.5, 0.5),
                              fc=(0.95, 0.95, 0.8),))
 
-        plt.show(block=False)
-        plt.pause(.01)
+        plt.ioff()
+        # plt.draw()
+        # plt.pause(.01)
+        plt.show()
+
 
 
 def plot_results(result_dt_file, result_ddpg_file):

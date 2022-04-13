@@ -15,6 +15,7 @@ def eval_model(arm, model, print_info=True, plot=False, target=None):
 
     reward_list = []
     distance_from_target_list = []
+    hit_list = []
     average_distance = None
     n_episodes = 0
 
@@ -84,6 +85,10 @@ def eval_model(arm, model, print_info=True, plot=False, target=None):
         arm.reset()
         n_episodes += 1
 
+        hit_list.append(1.0 if reward == 1 else 0)
+        hit_list_np = np.array(hit_list)
+        hit_rate = np.mean(hit_list_np)
+
         reward_list.append(reward)
         reward_list_np = np.array(reward_list)
         average_reward = np.mean(reward_list_np)
@@ -99,6 +104,7 @@ def eval_model(arm, model, print_info=True, plot=False, target=None):
             print(f' {"EVALUATION:":30}\n'
                   f' {"    Episode Number:":40} {n_episodes}\n'
                   f' {"    Episode Length:":40} {episode_length}\n'
+                  f' {"    Hit-rate:":40} {hit_rate}\n'
                   f' {"    Reward:":40} {reward}\n'
                   f' {"    Average Reward:":40} {average_reward}\n'
                   f' {"    STD Reward:":40} {std_reward}\n'
@@ -110,7 +116,6 @@ def eval_model(arm, model, print_info=True, plot=False, target=None):
             print('=======================================================')
 
         else:
-            # print(f" Evaluating Model... {int(100 * n_episodes / len(target_list))} %", end="\r")
             print("\r \rEvaluating Model... {0}%".format(str(int(100 * n_episodes / len(target_list)))), end='')
 
         episode_length = 0
@@ -133,7 +138,7 @@ def eval_model(arm, model, print_info=True, plot=False, target=None):
             plt.show()
 
     print(' Done.')
-    return average_distance
+    return average_distance, hit_rate
 
 
 def calc_dist_from_goal(obj_pos, target):
