@@ -43,7 +43,6 @@ def eval_model(arm, model, print_info=True, gripper_bool=False):
     episode_length = 0
 
     arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
-    warmup = False
     done = False
     print('---')
     while not done:
@@ -69,7 +68,11 @@ def eval_model(arm, model, print_info=True, gripper_bool=False):
         action = action.detach().cpu().numpy()
         done, termination_reason = arm.step(action)  # perform action and get new state
 
-        # print(f"dt: {t2 - t1}")
+        if action[-1] < arm.gripper_thresh:
+            if gripper_bool:
+                # time.sleep(0.01)
+                gripper.goTomm(350, 255, 255)
+                done = True
 
         rewards[-1] = 0.0  # Reward
         target_return = torch.cat([target_return, target_return[0, -1].reshape(1, 1)], dim=1)
@@ -77,27 +80,14 @@ def eval_model(arm, model, print_info=True, gripper_bool=False):
             [timesteps, torch.ones((1, 1), device=device, dtype=torch.long) * (episode_length+1)], dim=1)
         episode_length += 1
 
-        if warmup:
-            # time.sleep(0.01)
-            warmup = False
-        else:
-            # time.sleep(0.01)
-            pass
-
-        if action[-1] < arm.gripper_thresh:
-            if gripper_bool:
-                # time.sleep(0.01)
-                gripper.goTomm(350, 255, 255)
-                done = True
-
         if done:
             time.sleep(2)
             reset_arm()
 
             # print("states:")
             # print(states.to(dtype=torch.float32))
-            print("actions:")
-            print(actions.to(dtype=torch.float32))
+            # print("actions:")
+            # print(actions.to(dtype=torch.float32))
             # print("target_return:")
             # print(target_return.to(dtype=torch.float32))
             # print("timesteps:")
@@ -161,8 +151,9 @@ if __name__ == "__main__":
             attn_pdrop=0.0,
         )
 
-        # checkpoint = torch.load("./weights/dt_random.pth", map_location=torch.device('cpu'))
-        checkpoint = torch.load("../weights/dt_trained_simulation.pth", map_location=torch.device('cpu'))
+        # checkpoint = torch.load("../weights/dt_trained_simulation.pth", map_location=torch.device('cpu'))
+        checkpoint = torch.load("../weights/dt_trained_simulation_real_iter-4.pth", map_location=torch.device('cpu'))
+        # best4, 0_, 9, 6
         model.load_state_dict(checkpoint['state_dict'])
 
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
