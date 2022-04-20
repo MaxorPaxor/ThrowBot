@@ -29,7 +29,7 @@ def eval_model(arm, model, print_info=True, gripper_bool=False):
     model.eval()
 
     # x = np.random.rand() * 2 + 0.5
-    x = 0.6
+    x = 1.2
     target = np.array([x, 0.0, 0.0])
     arm.update_target(target)
 

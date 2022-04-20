@@ -44,7 +44,7 @@ def collect_real_data(arm, model, gripper_bool=False):
     agent.k = 3
 
     temp_mem = []
-    target_list = np.arange(1.5, 2.8, 0.1)
+    target_list = np.arange(0.3, 2.3, 0.1)
     # target_list = np.array([1.0])
 
     # arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
@@ -91,7 +91,7 @@ def collect_real_data(arm, model, gripper_bool=False):
                 # TODO: implement real robot exploration
 
             done, termination_reason = arm.step(action_)  # perform action and get new state
-            print(action_)
+            # print(action_)
 
             if action_[-1] < arm.gripper_thresh:  # Open gripper
                 if gripper_bool:

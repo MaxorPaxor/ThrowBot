@@ -17,7 +17,7 @@ class RoboticArm:
         self.total_time = 0.5  # sec
         self.number_steps = int(self.total_time * self.UPDATE_RATE)
         self.no_rotation = True
-        self.smooth_factor = 0  # 10Hz, 0.5sec, 0.5sf
+        self.smooth_factor = 0.0  # 10Hz, 0.5sec, 0.5sf
 
         # Init attributes
         self.object_distance = 0
@@ -47,7 +47,7 @@ class RoboticArm:
                                     'joint_5_b', 'joint_6_t', 'finger_joint'])
             self.max_speed = np.array([455, 385, 520, 550, 550, 1000, 1])  # deg/s
 
-        self.max_speed_factor = 0.9  # % of max speed for safety reasons
+        self.max_speed_factor = 1.5  # % of max speed for safety reasons
         self.gripper_thresh = 0.8  # Gripper open threshold
 
         # Init connections
