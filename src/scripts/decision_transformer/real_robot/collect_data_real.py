@@ -120,6 +120,7 @@ def collect_real_data(arm, model, gripper_bool=False):
 
         # DONE
         agent.generate_her_memory(temp_mem, obj_final_pos=object_position)
+        temp_mem = []
         reset_arm()
         n_episodes += 1
 
