@@ -49,13 +49,13 @@ class RoboticArm:
                                     'joint_5_b', 'joint_6_t', 'finger_joint'])
             self.max_speed = np.array([455, 385, 520, 550, 550, 1000, 1])  # deg/s
 
-        self.max_speed_factor = 1.3  # % of max speed for safety reasons
+        self.max_speed_factor = 1.0  # 1.3  # % of max speed for safety reasons
         self.gripper_thresh = 0.82  # Gripper open threshold
 
         # Connect to gripper
         self.gripper_object = RobotiqGripper("/dev/ttyUSB0", slaveaddress=9)
-        self.gripper_object.reset()
-        self.gripper_object.activate()
+        # self.gripper_object.reset()
+        # self.gripper_object.activate()
         self.gripper_object._aCoef = -4.7252
         self.gripper_object._bCoef = 1086.8131
         self.gripper_object.closemm = 0
@@ -113,7 +113,7 @@ class RoboticArm:
 
         else:  # Gripper is open
             gripper = 0.05
-            self.gripper_object.goTomm(350, 255, 255)
+            # self.gripper_object.goTomm(350, 255, 255)
 
         # Current_position + NN_velocity_output(-1 < V < +1) * max_speed(rd/s) * time(1/frequency)
         pos_1 = self.angles[0] + vel_1 * 1.0 / self.UPDATE_RATE
@@ -189,7 +189,7 @@ class RoboticArm:
         # trajectory.joint_names.append("finger_joint")
 
         # Current_position + NN_velocity_output(-1 < V < +1) * max_speed(rd/s) * time(1/frequency)
-        pos_1 = -1.5707
+        pos_1 = 1.5707  # -1.5707
         pos_2 = 0.5
         pos_3 = -0.3
         pos_4 = 0.0
@@ -326,6 +326,7 @@ class RoboticArm:
 
             # If object is released, wait for it to fall and reward the action
             if gripper < self.gripper_thresh:
+                self.gripper_object.goTomm(350, 255, 255)
                 termination_reason = "Gripper was opened with value: {}".format(gripper)
                 done = True  # True
 

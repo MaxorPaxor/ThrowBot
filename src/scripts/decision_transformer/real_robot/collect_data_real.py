@@ -30,7 +30,8 @@ def collect_real_data(arm, model):
     agent.k = 3
 
     temp_mem = []
-    target_list = np.arange(0.3, 2.3, 0.1)
+    # target_list = np.arange(0.3, 2.3, 0.1)
+    target_list = np.arange(2.2, 2.3, 0.1)
 
     # arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
     for x in target_list:
@@ -155,7 +156,7 @@ if __name__ == "__main__":
     )
 
     # checkpoint = torch.load("./weights/dt_random.pth", map_location=torch.device('cpu'))
-    checkpoint = torch.load("../weights/dt_trained_simulation.pth", map_location=torch.device('cpu'))
+    checkpoint = torch.load("../weights/dt_trained_simulation_good_1.pth", map_location=torch.device('cpu'))
     model.load_state_dict(checkpoint['state_dict'])
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

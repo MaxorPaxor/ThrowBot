@@ -1,3 +1,11 @@
+"""
+Run the ros point streaming interface for the motoman gp8:
+roslaunch motoman_gp8_support robot_interface_streaming_gp8.launch controller:='yrc1000' robot_ip:=192.168.255.3
+
+Enable the robot:
+rosservice call /robot_enable
+"""
+
 import torch
 import numpy as np
 import time
@@ -14,7 +22,7 @@ def eval_model(arm, model, print_info=True):
     model.eval()
 
     # x = np.random.rand() * 2 + 0.5
-    x = 1.2
+    x = 1.4
     target = np.array([x, 0.0, 0.0])
     arm.update_target(target)
 
@@ -30,9 +38,12 @@ def eval_model(arm, model, print_info=True):
     arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
     done = False
     print('---')
+
+    state_0 = arm.get_state()
     while not done:
 
-        state = arm.get_state()  # get state
+        # state = arm.get_state()  # get state
+        state = state_0
         state = np.append(state, arm.target[0])  # append target
         state = torch.from_numpy(state).reshape(1, model.state_dim).to(device=device, dtype=torch.float32)
         states = torch.cat([states, state], dim=0)
@@ -52,6 +63,10 @@ def eval_model(arm, model, print_info=True):
         actions[-1] = action
         action = action.detach().cpu().numpy()
         done, termination_reason = arm.step(action)  # perform action and get new state
+        print(f"state: {state}")
+        print(f"action: {action}")
+        # print(f"dt: {t2-t1}")
+        # print(done)
 
         rewards[-1] = 0.0  # Reward
         target_return = torch.cat([target_return, target_return[0, -1].reshape(1, 1)], dim=1)
@@ -120,8 +135,7 @@ if __name__ == "__main__":
         )
 
         # checkpoint = torch.load("../weights/dt_trained_simulation.pth", map_location=torch.device('cpu'))
-        checkpoint = torch.load("../weights/dt_trained_simulation_real_iter-4.pth", map_location=torch.device('cpu'))
-        # best4, 0_, 9, 6
+        checkpoint = torch.load("../weights/dt_trained_simulation_real_good_1.pth", map_location=torch.device('cpu'))
         model.load_state_dict(checkpoint['state_dict'])
 
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
