@@ -156,6 +156,7 @@ if __name__ == "__main__":
     arm_new = RoboticArm()
     arm_new.number_states = 1  # 1 state for decision transformer
     arm_new.state_mem = deque(maxlen=arm_new.number_states)
+    arm_new.noise_actions = False
 
     model = DecisionTransformer(
         state_dim=len(arm_new .joints) * arm_new.number_states + 1,
@@ -178,4 +179,4 @@ if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device=device)
 
-    eval_model(arm=arm_new, model=model, plot=False)#, target=1.4)
+    eval_model(arm=arm_new, model=model, plot=False)

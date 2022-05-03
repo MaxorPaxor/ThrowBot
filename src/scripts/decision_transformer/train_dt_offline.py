@@ -10,7 +10,7 @@ from agent.trainer import Trainer
 from evaluate_dt import eval_model
 from env.robot_env_dt import RoboticArm
 
-FINETUNE = True
+FINETUNE = False
 
 
 def run():
@@ -19,29 +19,38 @@ def run():
     max_ep_len = 16
     state_dim = 5  # 5 or 13
     act_dim = 4
-    batch_size = 256
+    batch_size = 128
     K = 16
 
     timestep_noise = True
 
     # load dataset
     if FINETUNE:
-        session_name = 'memory_real_traj-1000_Hz-20_herK-3_0.5-2.8.pkl'
+        session_name = 'memory_real_traj-1000_Hz-20_herK-3_apr20_max1.3.pkl'
         trajectories = pickle.load(open(f'./data/{session_name}', 'rb'))
     else:
-        session_name = 'memory_random_traj-5000_Hz-20_herK-3_noise-True_noise-max-0.3_noise-prob-0.5.pkl'
+        session_name = 'memory_random_traj-4000_Hz-20_herK-3_noise-False.pkl'
         trajectories = pickle.load(open(f'./data/{session_name}', 'rb'))
-    # (state, action, reward, done)
 
+    # (state, action, reward, done)
     fails = 0
     successes = 0
+    open_gripper_count = 0
+    closed_gripper_count = 0
     for trajectory in trajectories:
-        print(len(trajectory))
         for transition in trajectory:
             if transition[2] == -1:
                 fails += 1
             if transition[2] == 1:
                 successes += 1
+
+            if transition[1][-1] == -1:
+                open_gripper_count += 1
+            if transition[1][-1] == 1:
+                closed_gripper_count += 1
+
+    print(f"Open gripper count: {open_gripper_count}, Closed gripper count: {closed_gripper_count}, "
+          f"O/C Ratio: {open_gripper_count / (open_gripper_count + closed_gripper_count)}")
     print(f"Total real throws: {(fails + successes)/4} ,Successes: {successes}, Fails: {fails}")
 
     def get_batch(batch_size=256, max_len=K):
@@ -99,7 +108,7 @@ def run():
     n_layer = 3
     n_head = 1
     activation_function = 'relu'
-    dropout = 0.1
+    dropout = 0.1  # 0.1
     n_positions = 1024  # 1024
 
     number_experiments = 1
@@ -144,7 +153,7 @@ def run():
         )
         model_eval = model_eval.to(device=device)
 
-        optimizer = torch.optim.AdamW(model.parameters(), lr=3e-5, weight_decay=0*1e-2)  # weight_decay=1e-4
+        optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=0*1e-4)  # weight_decay=1e-4
         trainer = Trainer(
             model=model,
             optimizer=optimizer,
@@ -165,16 +174,16 @@ def run():
         best_avg_distance_eval = avg_distance_eval
 
         # Train
-        max_iters = 5
-        num_of_steps = 50
+        max_iters = 100
         loss_list = []
+        num_of_steps = 150
 
         print('=' * 40)
         for iter in range(max_iters):
             train_loss = trainer.train_iteration(num_steps=num_of_steps)
 
             if FINETUNE:
-                model.save(file_name='dt_trained_simulation_real.pth')
+                model.save(file_name=f'dt_trained_simulation_real_iter-{iter}_.pth')
             else:
                 model.save(file_name='dt_trained.pth')
 

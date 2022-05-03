@@ -22,7 +22,8 @@
 
   <!-- Load the URDF into the ROS Parameter Server -->
   <param name="robot_description" command="$(find xacro)/xacro.py $(find ThrowBot)/urdf/gp8_gazebo.xacro" />
-  <param name="object_description" command="$(find xacro)/xacro.py $(find ThrowBot)/urdf/object.urdf" />
+<!--  <param name="object_description" command="$(find xacro)/xacro.py $(find ThrowBot)/urdf/object.urdf" />-->
+    <param name="object_description" command="$(find xacro)/xacro.py $(find ThrowBot)/urdf/object_small.urdf" />
   <param name="target_description" command="$(find xacro)/xacro.py $(find ThrowBot)/urdf/target.urdf" />
 
 

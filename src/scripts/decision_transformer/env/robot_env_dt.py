@@ -20,9 +20,9 @@ class RoboticArm:
         self.smooth_factor = 0.8  # 10Hz, 0.5sec, 0.5sf
 
         # Noise
-        self.noise_actions = True
+        self.noise_actions = False
         self.noise_prob = 0.5  # 0.5
-        self.noise_max = 0.3  # 0.3 0.6
+        self.noise_max = 0.5  # 0.3 0.5
 
         # Init attributes
         self.object_distance = 0
@@ -33,7 +33,7 @@ class RoboticArm:
 
         # HER attributes
         self.her = True
-        self.target_radius = 0.2  # meters
+        self.target_radius = 0.1  # meters
 
         self.target = np.array([2, 0, 0])
         # Note: Target will be static unless agent class will override it when using HER
@@ -52,8 +52,8 @@ class RoboticArm:
                                     'joint_5_b', 'joint_6_t', 'finger_joint'])
             self.max_speed = np.array([455, 385, 520, 550, 550, 1000, 1])  # deg/s
 
-        self.max_speed_factor = 0.95  # % of max speed for safety reasons
-        self.gripper_thresh = 0.8  # Gripper open threshold
+        self.max_speed_factor = 1.0  # % of max speed for safety reasons
+        self.gripper_thresh = 0.82  # Gripper open threshold
 
         # Init connections
         # Publish
@@ -141,9 +141,9 @@ class RoboticArm:
         trajectory.joint_names.append("finger_joint")
 
         if gripper >= 0:
-            gripper = 0.19
+            gripper = 0.625  # 0.19, 0.625
         else:
-            gripper = 0.05
+            gripper = 0.5  # 0.05,
 
         point.positions.append(j1)  # 0.0
         point.positions.append(j2)  # 0.5
@@ -182,10 +182,10 @@ class RoboticArm:
         trajectory.joint_names.append("finger_joint")
 
         if gripper >= self.gripper_thresh:  # Gripper is closed
-            gripper = 0.19
+            gripper = 0.625  # 0.19, 0.625
 
         else:  # Gripper is open
-            gripper = 0.05
+            gripper = 0.5  # 0.05, 0.5
             # vel_1, vel_2, vel_3, vel_4, vel_5, vel_6 = 0, 0, 0, 0, 0, 0  # stop arm movement
             # dt = 0.02
 
@@ -402,7 +402,7 @@ class RoboticArm:
 
     def wait_for_object_to_touch_ground(self):
         t1 = time.time()
-        while not self.object_height <= 0.05 * np.sqrt(2) * 1.0:  # Make sure object is on the ground
+        while not self.object_height <= 0.5 * 0.015 * np.sqrt(2):  # Make sure object is on the ground
             time.sleep(0.005)
             if time.time() - t1 > 3:  # timeout
                 break
@@ -469,7 +469,7 @@ class RoboticArm:
                 success = False
 
         else:  # Gripper is closed and time is not up
-            if self.object_height <= 0.05 * np.sqrt(2) * 1.1:  # if too close to ground
+            if self.object_height <= 0.5 * 0.015 * np.sqrt(2):  # if too close to ground
                 termination_reason = "Object is too close to ground: {}".format(self.object_height)
                 done = True
                 reward = -1.0

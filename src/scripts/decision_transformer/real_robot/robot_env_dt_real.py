@@ -28,7 +28,7 @@ class RoboticArm:
 
         # HER attributes
         self.her = True
-        self.target_radius = 0.2  # meters
+        self.target_radius = 0.1  # meters
 
         self.target = np.array([2, 0, 0])
         # Note: Target will be static unless agent class will override it when using HER

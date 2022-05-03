@@ -19,8 +19,8 @@ class Agent:
 
         # HER
         self.her = arm.her
-        self.k = 4  # 4
-        self.generate_targets_factor_radius = 1.0
+        self.k = 8  # 4
+        self.generate_targets_factor_radius = 2.0  # 1.0
 
         # Dynamics
         self.max_length = int(arm.number_steps)
@@ -271,15 +271,24 @@ class Agent:
         Adding actual (state||target, action, reward, state_new||target, done) tuple together with a modified one:
         (state||target`, action, reward`, state_new||target`, done)
         """
-        target_list = [self.arm.target, obj_final_pos]
 
         # Create target list
+        # target_list = [self.arm.target, obj_final_pos]
+        target_list = [obj_final_pos]
+
+        # Create another k-1 targets
         for _ in range(self.k - 1):
             rand = np.random.rand() * 2 - 1  # Random [-1, 1]
             x = obj_final_pos[0] + self.arm.target_radius * rand * self.generate_targets_factor_radius
             if x > 0:
                 new_target = np.array([x, 0, 0])
                 target_list.append(new_target)
+
+        # Create k-1 bad targets
+        # for _ in range(self.k - 1):
+        #     rand = np.random.rand() * 2.3 + 0.2  # Random [0.2, 2.5]
+        #     new_target = np.array([rand, 0, 0])
+        #     target_list.append(new_target)
 
         # Create new memory buffer
         for trg in target_list:
@@ -305,8 +314,6 @@ class Agent:
 
                 new_trajectory.append([state, action, reward, done])
 
-            # print("Traj")
-            # print(new_trajectory)
             self.remember(new_trajectory)
 
     @staticmethod

@@ -45,7 +45,6 @@ def collect_real_data(arm, model, gripper_bool=False):
 
     temp_mem = []
     target_list = np.arange(0.3, 2.3, 0.1)
-    # target_list = np.array([1.0])
 
     # arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
     for x in target_list:
@@ -125,7 +124,7 @@ def collect_real_data(arm, model, gripper_bool=False):
         n_episodes += 1
 
         pickle.dump(agent.memory, open(f"../data/memory_real_"
-                                       f"traj-{agent.MAX_MEMORY}_"
+                                       f"traj-{len(target_list)}_"
                                        f"Hz-{arm.UPDATE_RATE}_"
                                        f"herK-{agent.k}.pkl", 'wb'))
 
