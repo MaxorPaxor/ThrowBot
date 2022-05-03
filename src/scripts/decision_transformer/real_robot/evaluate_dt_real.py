@@ -7,23 +7,8 @@ from collections import deque
 from agent.model_dt.model_dt import DecisionTransformer
 from real_robot.robot_env_dt_real import RoboticArm
 
-from robotiqGripper import RobotiqGripper
 
-
-def eval_model(arm, model, print_info=True, gripper_bool=False):
-
-    if gripper_bool:
-        # Connect to gripper
-        gripper_status = None
-        gripper = RobotiqGripper("/dev/ttyUSB0", slaveaddress=9)
-        gripper._aCoef = -4.7252
-        gripper._bCoef = 1086.8131
-        gripper.closemm = 0
-        gripper.openmm = 860
-        gripper.goTomm(270, 255, 255)
-        print("Gripper is ready")
-
-    # reset_arm()
+def eval_model(arm, model, print_info=True):
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.eval()
@@ -68,12 +53,6 @@ def eval_model(arm, model, print_info=True, gripper_bool=False):
         action = action.detach().cpu().numpy()
         done, termination_reason = arm.step(action)  # perform action and get new state
 
-        if action[-1] < arm.gripper_thresh:
-            if gripper_bool:
-                # time.sleep(0.01)
-                gripper.goTomm(350, 255, 255)
-                done = True
-
         rewards[-1] = 0.0  # Reward
         target_return = torch.cat([target_return, target_return[0, -1].reshape(1, 1)], dim=1)
         timesteps = torch.cat(
@@ -106,23 +85,12 @@ def eval_model(arm, model, print_info=True, gripper_bool=False):
 
 def reset_arm():
     print("Restarting arm...")
-    # time.sleep(2)
     arm_new.step(np.array([0.0, 0.0, 0.0, 1.0]))
     arm_new.reset_arm()
-    if GRIPPER:
-        gripper = RobotiqGripper("/dev/ttyUSB0", slaveaddress=9)
-        gripper._aCoef = -4.7252
-        gripper._bCoef = 1086.8131
-        gripper.closemm = 0
-        gripper.openmm = 860
-        gripper.goTomm(270, 255, 255)
-    # time.sleep(2)
     print("Done.")
 
 
 if __name__ == "__main__":
-    GRIPPER = True
-
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', type=str, default=False)
     args = parser.parse_args()
@@ -159,4 +127,4 @@ if __name__ == "__main__":
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         model = model.to(device=device)
 
-        eval_model(arm=arm_new, model=model, gripper_bool=GRIPPER)
+        eval_model(arm=arm_new, model=model)

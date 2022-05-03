@@ -9,24 +9,10 @@ from real_robot.robot_env_dt_real import RoboticArm
 from agent.model_dt.model_dt import DecisionTransformer
 from agent.agent_dt import Agent
 
-from robotiqGripper import RobotiqGripper
-
-GRIPPER = True
 EXPLORATION = True
 
 
-def collect_real_data(arm, model, gripper_bool=False):
-
-    if gripper_bool:
-        # Connect to gripper
-        gripper_status = None
-        gripper = RobotiqGripper("/dev/ttyUSB0", slaveaddress=9)
-        gripper._aCoef = -4.7252
-        gripper._bCoef = 1086.8131
-        gripper.closemm = 0
-        gripper.openmm = 860
-        gripper.goTomm(270, 255, 255)
-        print("Gripper is ready")
+def collect_real_data(arm, model):
 
     # Reset arm
     reset_arm()
@@ -92,10 +78,6 @@ def collect_real_data(arm, model, gripper_bool=False):
             done, termination_reason = arm.step(action_)  # perform action and get new state
             # print(action_)
 
-            if action_[-1] < arm.gripper_thresh:  # Open gripper
-                if gripper_bool:
-                    gripper.goTomm(350, 255, 255)
-
             if done:
                 object_position = float(input(f'Target: {x}. Input object position '))
                 object_position = np.array([object_position, 0, 0])
@@ -136,13 +118,6 @@ def reset_arm():
     time.sleep(4)
     arm_new.step(np.array([0.0, 0.0, 0.0, 1.0]))
     arm_new.reset_arm()
-    if GRIPPER:
-        gripper = RobotiqGripper("/dev/ttyUSB0", slaveaddress=9)
-        gripper._aCoef = -4.7252
-        gripper._bCoef = 1086.8131
-        gripper.closemm = 0
-        gripper.openmm = 860
-        gripper.goTomm(270, 255, 255)
     time.sleep(4)
     print("Done.")
 
@@ -186,4 +161,4 @@ if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device=device)
 
-    collect_real_data(arm=arm_new, model=model, gripper_bool=GRIPPER)
+    collect_real_data(arm=arm_new, model=model)
