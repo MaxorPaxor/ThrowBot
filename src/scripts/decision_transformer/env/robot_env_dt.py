@@ -13,11 +13,11 @@ import time
 class RoboticArm:
     def __init__(self):
         # Global params
-        self.UPDATE_RATE = 20  # HZ
+        self.UPDATE_RATE = 10  # HZ
         self.total_time = 0.6  # sec
         self.number_steps = int(self.total_time * self.UPDATE_RATE)
         self.no_rotation = True
-        self.smooth_factor = 0.8  # 10Hz, 0.5sec, 0.5sf
+        self.smooth_factor = 0.0  # 10Hz, 0.5sec, 0.5sf
 
         # Noise
         self.random_delay = None
@@ -223,13 +223,13 @@ class RoboticArm:
         point.positions.append(pos_6)
         point.positions.append(gripper)
 
-        point.velocities.append(vel_1)
-        point.velocities.append(vel_2)
-        point.velocities.append(vel_3)
-        point.velocities.append(vel_4)
-        point.velocities.append(vel_5)
-        point.velocities.append(vel_6)
-        point.velocities.append(0)
+        # point.velocities.append(vel_1)
+        # point.velocities.append(vel_2)
+        # point.velocities.append(vel_3)
+        # point.velocities.append(vel_4)
+        # point.velocities.append(vel_5)
+        # point.velocities.append(vel_6)
+        # point.velocities.append(0)
 
         if dt is None:
             dt = 1.0 / self.UPDATE_RATE
@@ -590,11 +590,24 @@ class RoboticArm:
 
 if __name__ == '__main__':
     robotic_arm = RoboticArm()
-    # robotic_arm.reset()
-    robotic_arm.test_throw()
+    robotic_arm.reset()
+    # robotic_arm.test_throw()
     # robotic_arm.test_pid()
 
-    # for i in range(1000):
-    #     state = robotic_arm.get_state()
-    #     print(state)
-    #     time.sleep(0.1)
+    for i in range(1, 30):
+
+        state = robotic_arm.get_state()
+        print(state)
+
+        if i == 10:
+            print(i)
+            action = np.array([-0.5, 0.5, 0.5, 0.99])
+            reward, done, termination_reason, distance, success = robotic_arm.step(action)
+
+        elif i == 20:
+            print(i)
+            action = np.array([0.5, -0.5, -0.5, 0.99])
+            reward, done, termination_reason, distance, success = robotic_arm.step(action)
+
+        else:
+            time.sleep(1.0 / robotic_arm.UPDATE_RATE)
