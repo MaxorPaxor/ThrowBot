@@ -14,7 +14,7 @@ class RoboticArm:
     def __init__(self):
         # Global params
         self.UPDATE_RATE = 20  # HZ
-        self.total_time = 0.5  # sec
+        self.total_time = 1.0  # sec
         self.number_steps = int(self.total_time * self.UPDATE_RATE)
         self.no_rotation = True
         self.smooth_factor = 0.0  # 10Hz, 0.5sec, 0.5sf

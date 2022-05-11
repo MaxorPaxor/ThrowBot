@@ -33,9 +33,9 @@ def collect_data():
     agent.epsilon_arm = 100  # 50
     agent.soft_exploration_rate = 0
     agent.epsilon_arm_decay = 0
-    agent.MAX_MEMORY = 8000  # Number of trajectories
+    agent.MAX_MEMORY = 10000  # Number of trajectories
     agent.memory = deque(maxlen=int(agent.MAX_MEMORY))
-    agent.k = 3
+    agent.k = 8
 
     start_time = time.time()
     total_time = 0
@@ -50,15 +50,16 @@ def collect_data():
 
         t1 = time.time()
         state = arm.get_state()  # get state
-        
         action = agent.get_action_random()  # get action
         action = action.detach().cpu().numpy()
+        # action = np.array([0, 0, 0, 1])
         time.sleep(0.003)  # simulates network pass
 
         t2 = time.time()
         # print(f"dt state to action: {t2-t1}")
-        # print(f"State: {state}")
+        # print(f"state: {state}")
         # print(f"Action: {action}")
+        # print(f"delay: {arm.random_delay}")
         reward, done, termination_reason, obj_pos, success = arm.step(action)  # perform action and get new state
 
         temp_mem.append((state, action, reward, done, success))

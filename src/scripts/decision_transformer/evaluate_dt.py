@@ -39,6 +39,8 @@ def eval_model(arm, model, print_info=True, plot=False, target=None):
         arm.update_target(target)
 
         done = False
+
+        action_0 = None  # TODO: Check static actions
         while not done:
 
             t1 = time.time()
@@ -56,6 +58,10 @@ def eval_model(arm, model, print_info=True, plot=False, target=None):
                 target_return.to(dtype=torch.float32),
                 timesteps.to(dtype=torch.long),
             )  # get action
+
+            # if action_0 is None:
+            #     action_0 = action
+            # action = action_0
 
             actions[-1] = action
             action = action.detach().cpu().numpy()
@@ -112,7 +118,8 @@ def eval_model(arm, model, print_info=True, plot=False, target=None):
                   f' {"    Final Object X Position:":40} {round(obj_pos[0], 4)}\n'
                   f' {"    Distance From Target:":40} {round(distance_from_goal, 4)}\n'
                   f' {"    Average Distance From Target:":40} {average_distance}\n'
-                  f' {"    Variance distance:":40} {std_distance}\n')
+                  f' {"    Variance Distance:":40} {std_distance}\n'
+                  f' {"    Hit Rate:":40} {hit_rate}\n')
             print('=======================================================')
 
         else:
@@ -157,23 +164,27 @@ if __name__ == "__main__":
     arm_new.number_states = 1  # 1 state for decision transformer
     arm_new.state_mem = deque(maxlen=arm_new.number_states)
     arm_new.noise_actions = False
+    arm_new.random_delay = 0
+    arm_new.target_radius = 0.1
 
+    hidden_size = 1024
+    n_head = 1
     model = DecisionTransformer(
         state_dim=len(arm_new .joints) * arm_new.number_states + 1,
         act_dim=len(arm_new .joints),
-        max_length=10,  # K=10
-        max_ep_len=16,  # max_ep_length=10
-        hidden_size=128,
-        n_layer=3,
-        n_head=1,
-        n_inner=4 * 128,
+        max_length=20,  # K=10
+        max_ep_len=64,  # max_ep_length=10
+        hidden_size=hidden_size,
+        n_layer=1,
+        n_head=n_head,  # 1
+        n_inner=4 * hidden_size,
         activation_function='relu',
         n_positions=1024,
         resid_pdrop=0.0,
         attn_pdrop=0.0,
     )
 
-    checkpoint = torch.load("./weights/dt_trained.pth", map_location=torch.device('cpu'))
+    checkpoint = torch.load("./weights/dt_trained_best.pth", map_location=torch.device('cpu'))
     model.load_state_dict(checkpoint['state_dict'])
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

@@ -39,7 +39,15 @@ class Trainer:
             a_pred_new,
             a_real_act)
 
-        return 3*loss_gripper + loss_states
+        if self.step_number % 50 == 0:
+            print(f"\n")
+            print(f"Step number {self.step_number}")
+            print(f"Action loss: {loss_states}, \nPredicted action: {a_pred[:, :-1]}, \nReal action: {a_real[:, :-1]}")
+            print(f"Gripper loss: {loss_gripper}, \nPredicted gripper: {a_pred_new}, \nReal gripper: {a_real_act}")
+            print(f"---" * 10)
+
+            # 0.27 0.27
+        return loss_gripper + loss_states
 
     def train_iteration(self, num_steps, back_prop=True):
         train_losses = []

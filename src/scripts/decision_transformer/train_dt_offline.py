@@ -16,21 +16,21 @@ FINETUNE = False
 def run():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    max_ep_len = 16
-    state_dim = 5  # 5 or 13
+    max_ep_len = 64
+    state_dim = 5  # 5
     act_dim = 4
-    batch_size = 128
-    K = 16
+    batch_size = 256
+    K = 20
 
     timestep_noise = True
 
     # load dataset
     if FINETUNE:
-        session_name = 'memory_real_traj-1000_Hz-20_herK-3_apr20_max1.3.pkl'
-        trajectories = pickle.load(open(f'./data/{session_name}', 'rb'))
+        session_name = 'memory_real_traj-1000_Hz-20_herK-3_apr20_max1.3'
+        trajectories = pickle.load(open(f'./data/{session_name}.pkl', 'rb'))
     else:
-        session_name = 'memory_random_traj-4000_Hz-20_herK-3_noise-False.pkl'
-        trajectories = pickle.load(open(f'./data/{session_name}', 'rb'))
+        session_name = 'memory_random_traj-10000_Hz-20_herK-8_noise-False'
+        trajectories = pickle.load(open(f'./data/{session_name}.pkl', 'rb'))
 
     # (state, action, reward, done)
     fails = 0
@@ -104,9 +104,10 @@ def run():
 
         return s, a, r, d, rtg, ts, mask
 
-    embed_dim = 128
-    n_layer = 3
-    n_head = 1
+    # 0.386 0.028
+    embed_dim = 1024  # 128
+    n_layer = 1  # 3
+    n_head = 1  # 1
     activation_function = 'relu'
     dropout = 0.1  # 0.1
     n_positions = 1024  # 1024
@@ -137,23 +138,7 @@ def run():
         model = model.to(device=device)
         model.save(file_name='dt_trained.pth')
 
-        model_eval = DecisionTransformer(
-            state_dim=state_dim,
-            act_dim=act_dim,
-            max_length=K,
-            max_ep_len=max_ep_len,
-            hidden_size=embed_dim,
-            n_layer=n_layer,
-            n_head=n_head,
-            n_inner=4 * embed_dim,
-            activation_function=activation_function,
-            n_positions=n_positions,
-            resid_pdrop=0,
-            attn_pdrop=0,
-        )
-        model_eval = model_eval.to(device=device)
-
-        optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=0*1e-4)  # weight_decay=1e-4
+        optimizer = torch.optim.AdamW(model.parameters(), lr=3e-5, weight_decay=0*1e-4)  # weight_decay=1e-4
         trainer = Trainer(
             model=model,
             optimizer=optimizer,
@@ -170,13 +155,15 @@ def run():
         # First evaluation
         evaluation_list = []
         hit_rate_list = []
-        avg_distance_eval = None
-        best_avg_distance_eval = avg_distance_eval
+        score_eval = None
+        hit_rate = None
+        best_score_eval = score_eval
+        best_hit_rate = hit_rate
 
         # Train
         max_iters = 100
         loss_list = []
-        num_of_steps = 150
+        num_of_steps = 64
 
         print('=' * 40)
         for iter in range(max_iters):
@@ -188,18 +175,23 @@ def run():
                 model.save(file_name='dt_trained.pth')
 
                 # Evaluate
-                checkpoint = torch.load("./weights/dt_trained.pth", map_location=torch.device('cpu'))
-                model_eval.load_state_dict(checkpoint['state_dict'])
-                avg_distance_eval, hit_rate = eval_model(arm=arm_new, model=model_eval, print_info=False, plot=False)
+                score_eval, hit_rate = eval_model(arm=arm_new, model=model, print_info=False, plot=False)
 
                 hit_rate_list.append(hit_rate)
-                evaluation_list.append(avg_distance_eval)
+                evaluation_list.append(score_eval)
                 evaluation_list_np = np.array(evaluation_list)
                 evaluation_var = evaluation_list_np.var()
+                evaluation_mean = evaluation_list_np.mean()
 
-                if best_avg_distance_eval is None or avg_distance_eval < best_avg_distance_eval:
-                    best_avg_distance_eval = avg_distance_eval
+                if best_hit_rate is None or hit_rate > best_hit_rate:
+                    best_hit_rate = hit_rate
+                    best_score_eval = score_eval
                     model.save(file_name='dt_trained_best.pth')
+
+                elif hit_rate == best_hit_rate:
+                    if score_eval < best_score_eval:
+                        best_score_eval = score_eval
+                        model.save(file_name='dt_trained_best.pth')
 
             loss_list.append(train_loss)
 
@@ -207,10 +199,12 @@ def run():
             print(f"Iteration: {iter+1}/{max_iters}")
             print(f"Loss: {train_loss}")
             if not FINETUNE:
-                print(f"Evaluation AVG hit-rate: {hit_rate}")
-                print(f"Evaluation AVG distance: {avg_distance_eval}")
-                print(f"Var Evaluation: {evaluation_var}")
-                print(f"Best Evaluation Score: {best_avg_distance_eval}")
+                print(f"Evaluation Hit-rate: {hit_rate}")
+                print(f"Evaluation Score: {score_eval}")
+                print(f"Evaluation Var: {evaluation_var}")
+                print(f"Evaluation Mean: {evaluation_mean}")
+                print(f"Evaluation Best Score: {best_score_eval}")
+                print(f"Evaluation Best Hit Rate: {best_hit_rate}")
 
             print('=' * 40)
 

@@ -14,12 +14,14 @@ class RoboticArm:
     def __init__(self):
         # Global params
         self.UPDATE_RATE = 20  # HZ
-        self.total_time = 0.5  # sec
+        self.total_time = 0.6  # sec
         self.number_steps = int(self.total_time * self.UPDATE_RATE)
         self.no_rotation = True
         self.smooth_factor = 0.8  # 10Hz, 0.5sec, 0.5sf
 
         # Noise
+        self.random_delay = None
+        self.random_delay_amp = 0
         self.noise_actions = False
         self.noise_prob = 0.5  # 0.5
         self.noise_max = 0.5  # 0.3 0.5
@@ -53,7 +55,7 @@ class RoboticArm:
             self.max_speed = np.array([455, 385, 520, 550, 550, 1000, 1])  # deg/s
 
         self.max_speed_factor = 1.0  # % of max speed for safety reasons
-        self.gripper_thresh = 0.82  # Gripper open threshold
+        self.gripper_thresh = 0.85  # Gripper open threshold
 
         # Init connections
         # Publish
@@ -119,6 +121,8 @@ class RoboticArm:
             self.velocity = [0, 0, 0, 0]
         else:
             self.velocity = [0, 0, 0, 0, 0, 0, 0]
+
+        self.random_delay = int(np.random.rand() * self.random_delay_amp)
 
     def trajectory(self, j1=0.0, j2=0.5, j3=-0.3, j4=0.0,
                    j5=-1.5, j6=0.0, gripper=-1.0, dt=None):
@@ -402,7 +406,7 @@ class RoboticArm:
 
     def wait_for_object_to_touch_ground(self):
         t1 = time.time()
-        while not self.object_height <= 0.5 * 0.015 * np.sqrt(2):  # Make sure object is on the ground
+        while not self.object_height <= 1.2 * 0.5 * 0.015 * np.sqrt(2):  # Make sure object is on the ground
             time.sleep(0.005)
             if time.time() - t1 > 3:  # timeout
                 break
@@ -412,6 +416,10 @@ class RoboticArm:
         Performs 1 step for the robotic arm and checks if stop conditions are met
         Returns reward, done flag and termination reason
         """
+        if self.random_delay > 0:
+            self.random_delay = self.random_delay - 1
+            velocity_vector = [0, 0, 0, 1]
+
         velocity_vector = self.proj_on_max_speed(velocity_vector)  # Rescale for maximum speed
         velocity_vector = self.smooth_velocity(velocity_vector)  # Apply complimentary filter on velocity vector
         if self.noise_actions:
@@ -420,16 +428,17 @@ class RoboticArm:
         if self.no_rotation:
             self.velocity = velocity_vector
             vel_2, vel_3, vel_5, gripper = velocity_vector
-            vel_1, vel_4, vel_6 = 0, 0, 0
+            vel_1, vel_4, vel_6 = 0.0, 0.0, 0.0
         else:
             self.velocity = velocity_vector
             vel_1, vel_2, vel_3, vel_4, vel_5, vel_6, gripper = velocity_vector
 
         trajectory = self.vel_trajectory(vel_1, vel_2, vel_3, vel_4, vel_5, vel_6, gripper)
-        self.pub_command.publish(trajectory)
+        if self.random_delay <= 0:
+            self.pub_command.publish(trajectory)
 
-        self.rate.sleep()
-        # time.sleep(1.0 / self.UPDATE_RATE)
+        # self.rate.sleep()
+        time.sleep(1.0 / self.UPDATE_RATE)
         self.curr_time += 1.0 / self.UPDATE_RATE
         self.curr_step += 1
 
@@ -582,6 +591,10 @@ class RoboticArm:
 if __name__ == '__main__':
     robotic_arm = RoboticArm()
     # robotic_arm.reset()
-    # robotic_arm.test_throw_position()
-    # robotic_arm.test_throw_vel()
     robotic_arm.test_throw()
+    # robotic_arm.test_pid()
+
+    # for i in range(1000):
+    #     state = robotic_arm.get_state()
+    #     print(state)
+    #     time.sleep(0.1)
