@@ -22,7 +22,7 @@ def eval_model(arm, model, print_info=True):
     model.eval()
 
     # x = np.random.rand() * 2 + 0.5
-    x = 1.4
+    x = 1.8
     target = np.array([x, 0.0, 0.0])
     arm.update_target(target)
 
@@ -42,8 +42,8 @@ def eval_model(arm, model, print_info=True):
     state_0 = arm.get_state()
     while not done:
 
-        # state = arm.get_state()  # get state
-        state = state_0
+        state = arm.get_state()  # get state
+        # state = state_0
         state = np.append(state, arm.target[0])  # append target
         state = torch.from_numpy(state).reshape(1, model.state_dim).to(device=device, dtype=torch.float32)
         states = torch.cat([states, state], dim=0)
@@ -119,15 +119,17 @@ if __name__ == "__main__":
         reset_arm()
 
     elif args.mode == 'throw':
+        hidden_size = 1024
+        n_head = 1
         model = DecisionTransformer(
             state_dim=len(arm_new .joints) * arm_new.number_states + 1,
             act_dim=len(arm_new .joints),
-            max_length=10,
-            max_ep_len=16,
-            hidden_size=128,
-            n_layer=3,
-            n_head=1,
-            n_inner=4 * 128,
+            max_length=20,
+            max_ep_len=64,
+            hidden_size=hidden_size,
+            n_layer=1,
+            n_head=n_head,
+            n_inner=4 * hidden_size,
             activation_function='relu',
             n_positions=1024,
             resid_pdrop=0.0,
@@ -135,7 +137,7 @@ if __name__ == "__main__":
         )
 
         # checkpoint = torch.load("../weights/dt_trained_simulation.pth", map_location=torch.device('cpu'))
-        checkpoint = torch.load("../weights/dt_trained_simulation_real_good_1.pth", map_location=torch.device('cpu'))
+        checkpoint = torch.load("../weights/dt_trained_simulation_2.pth", map_location=torch.device('cpu'))
         model.load_state_dict(checkpoint['state_dict'])
 
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

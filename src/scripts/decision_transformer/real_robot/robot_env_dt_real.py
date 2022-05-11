@@ -50,7 +50,7 @@ class RoboticArm:
             self.max_speed = np.array([455, 385, 520, 550, 550, 1000, 1])  # deg/s
 
         self.max_speed_factor = 1.0  # 1.3  # % of max speed for safety reasons
-        self.gripper_thresh = 0.82  # Gripper open threshold
+        self.gripper_thresh = 0.85  # Gripper open threshold
 
         # Connect to gripper
         self.gripper_object = RobotiqGripper("/dev/ttyUSB0", slaveaddress=9)
@@ -311,8 +311,8 @@ class RoboticArm:
         self.pub_command.publish(trajectory)
         # print(trajectory)
 
-        # self.rate.sleep()
-        time.sleep(1.0 / self.UPDATE_RATE)
+        self.rate.sleep()
+        # time.sleep(1.0 / self.UPDATE_RATE)
         self.curr_time += 1.0 / self.UPDATE_RATE
         self.curr_step += 1
 
@@ -367,6 +367,14 @@ class RoboticArm:
 
 if __name__ == '__main__':
     robotic_arm = RoboticArm()
-    for _ in range(100):
+    robotic_arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
+
+    for i in range(100):
         print(robotic_arm.get_state())
+
+        if (i+1) % 10 == 0:
+            print(i)
+            action = np.array([-0.1, 0.1, 0.1, 0.99])
+            done, termination_reason = robotic_arm.step(action)
+
         time.sleep(0.05)
