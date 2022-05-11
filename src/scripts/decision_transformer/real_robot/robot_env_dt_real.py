@@ -15,7 +15,7 @@ from robotiqGripper import RobotiqGripper
 class RoboticArm:
     def __init__(self):
         # Global params
-        self.UPDATE_RATE = 20  # HZ
+        self.UPDATE_RATE = 10  # HZ
         self.total_time = 1.0  # sec
         self.number_steps = int(self.total_time * self.UPDATE_RATE)
         self.no_rotation = True
@@ -311,8 +311,8 @@ class RoboticArm:
         self.pub_command.publish(trajectory)
         # print(trajectory)
 
-        self.rate.sleep()
-        # time.sleep(1.0 / self.UPDATE_RATE)
+        # self.rate.sleep()
+        time.sleep(1.0 / self.UPDATE_RATE)
         self.curr_time += 1.0 / self.UPDATE_RATE
         self.curr_step += 1
 
@@ -359,8 +359,8 @@ class RoboticArm:
         self.pub_command.publish(trajectory)
         # print(trajectory)
 
-        # self.rate.sleep()
-        time.sleep(1.0 / self.UPDATE_RATE)
+        self.rate.sleep()
+        # time.sleep(1.0 / self.UPDATE_RATE)
         self.curr_time += 1.0 / self.UPDATE_RATE
         self.curr_step += 1
 
@@ -369,12 +369,22 @@ if __name__ == '__main__':
     robotic_arm = RoboticArm()
     robotic_arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
 
-    for i in range(100):
-        print(robotic_arm.get_state())
+    for i in range(1, 30):
 
-        if (i+1) % 10 == 0:
+        state = robotic_arm.get_state()
+        print(state)
+
+        if i == 10:
             print(i)
+            robotic_arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
             action = np.array([-0.1, 0.1, 0.1, 0.99])
             done, termination_reason = robotic_arm.step(action)
 
-        time.sleep(0.05)
+        elif i == 28:
+            print(i)
+            robotic_arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
+            action = np.array([0.1, -0.1, -0.1, 0.99])
+            done, termination_reason = robotic_arm.step(action)
+
+        else:
+            time.sleep(1.0 / robotic_arm.UPDATE_RATE)
