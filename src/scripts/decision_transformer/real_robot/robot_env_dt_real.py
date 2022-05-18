@@ -68,7 +68,7 @@ class RoboticArm:
         self.rate = rospy.Rate(self.UPDATE_RATE)
 
         # Publish
-        self.pub_command = rospy.Publisher('/joint_command', JointTrajectory, queue_size=1)
+        self.pub_command = rospy.Publisher('/joint_command', JointTrajectory, queue_size=0)
         while self.pub_command.get_num_connections() == 0:
             self.rate.sleep()
 
@@ -359,8 +359,8 @@ class RoboticArm:
         self.pub_command.publish(trajectory)
         # print(trajectory)
 
-        self.rate.sleep()
-        # time.sleep(1.0 / self.UPDATE_RATE)
+        # self.rate.sleep()
+        time.sleep(1.0 / self.UPDATE_RATE)
         self.curr_time += 1.0 / self.UPDATE_RATE
         self.curr_step += 1
 
@@ -376,14 +376,14 @@ if __name__ == '__main__':
 
         if i == 10:
             print(i)
-            robotic_arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
-            action = np.array([-0.1, 0.1, 0.1, 0.99])
+            # robotic_arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
+            action = np.array([-0.5, 0.5, 0.5, 0.99])
             done, termination_reason = robotic_arm.step(action)
 
-        elif i == 28:
+        elif i == 20:
             print(i)
-            robotic_arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
-            action = np.array([0.1, -0.1, -0.1, 0.99])
+            # robotic_arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
+            action = np.array([0.5, -0.5, -0.5, 0.99])
             done, termination_reason = robotic_arm.step(action)
 
         else:
