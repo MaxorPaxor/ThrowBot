@@ -38,7 +38,7 @@ class Agent:
             self.memory = pickle.load(open('data/memory.pkl', 'rb'))
 
         # Exploration
-        self.noise_strong = OUActionNoise(mu=np.zeros(self.n_actions), sigma=1.0, dt=8e-1, theta=0)  # dt=4e-2
+        self.noise_strong = OUActionNoise(mu=np.zeros(self.n_actions), sigma=0.6, dt=2e-1, theta=0)  # dt=4e-2
         self.noise_soft = OUActionNoise(mu=np.zeros(self.n_actions), sigma=0.4, dt=2e-2, theta=0.1)
         self.exploration_flag = True
         self.epsilon_arm = 30  # 50

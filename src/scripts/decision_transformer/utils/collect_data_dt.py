@@ -33,7 +33,7 @@ def collect_data():
     agent.epsilon_arm = 100  # 50
     agent.soft_exploration_rate = 0
     agent.epsilon_arm_decay = 0
-    agent.MAX_MEMORY = 10000  # Number of trajectories
+    agent.MAX_MEMORY = 8000  # Number of trajectories
     agent.memory = deque(maxlen=int(agent.MAX_MEMORY))
     agent.k = 8
 

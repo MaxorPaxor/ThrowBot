@@ -63,5 +63,5 @@ class OUActionNoise(object):
 if __name__ == "__main__":
     # Test Noise:
     # noise = OUActionNoise(mu=0, sigma=0.8, dt=3e-2, theta=0.1, x0=None)
-    noise = OUActionNoise(mu=0, sigma=2.5, dt=4e-2, theta=15, x0=None)
+    noise = OUActionNoise(mu=0, sigma=1.0, dt=2e-1, theta=0, x0=None)
     noise.test_noise(interval=10)
