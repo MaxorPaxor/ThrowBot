@@ -22,7 +22,7 @@ def eval_model(arm, model, print_info=True):
     model.eval()
 
     # x = np.random.rand() * 2 + 0.5
-    x = 1.8
+    x = 1.6
     target = np.array([x, 0.0, 0.0])
     arm.update_target(target)
 
@@ -63,8 +63,8 @@ def eval_model(arm, model, print_info=True):
         actions[-1] = action
         action = action.detach().cpu().numpy()
         done, termination_reason = arm.step(action)  # perform action and get new state
-        print(f"state: {state}")
-        print(f"action: {action}")
+        # print(f"state: {state}")
+        # print(f"action: {action}")
         # print(f"dt: {t2-t1}")
         # print(done)
 
@@ -106,19 +106,17 @@ def reset_arm():
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', type=str, default=False)
-    args = parser.parse_args()
-    print(f"Mode: {args.mode}")
-
     arm_new = RoboticArm()
     arm_new.number_states = 1  # 1 state for decision transformer
     arm_new.state_mem = deque(maxlen=arm_new.number_states)
 
-    if args.mode == 'reset':
+    # MODE = 'reset'
+    MODE = 'throw'
+
+    if MODE == 'reset':
         reset_arm()
 
-    elif args.mode == 'throw':
+    elif MODE == 'throw':
         hidden_size = 1024
         n_head = 1
         model = DecisionTransformer(
@@ -137,7 +135,7 @@ if __name__ == "__main__":
         )
 
         # checkpoint = torch.load("../weights/dt_trained_simulation.pth", map_location=torch.device('cpu'))
-        checkpoint = torch.load("../weights/dt_trained_best.pth", map_location=torch.device('cpu'))
+        checkpoint = torch.load("../weights/dt_trained_best_sim.pth", map_location=torch.device('cpu'))
         model.load_state_dict(checkpoint['state_dict'])
 
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

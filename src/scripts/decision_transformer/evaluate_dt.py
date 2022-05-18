@@ -43,7 +43,6 @@ def eval_model(arm, model, print_info=True, plot=False, target=None):
         action_0 = None  # TODO: Check static actions
         while not done:
 
-            t1 = time.time()
             state = arm.get_state()  # get state
             state = np.append(state, arm.target[0])  # append target
             state = torch.from_numpy(state).reshape(1, model.state_dim).to(device=device, dtype=torch.float32)
@@ -51,6 +50,7 @@ def eval_model(arm, model, print_info=True, plot=False, target=None):
             actions = torch.cat([actions, torch.zeros((1, model.act_dim), device=device)], dim=0)
             rewards = torch.cat([rewards, torch.zeros(1, device=device)])
 
+            t1 = time.time()
             action = model.get_action(
                 states.to(dtype=torch.float32),
                 actions.to(dtype=torch.float32),
@@ -58,6 +58,8 @@ def eval_model(arm, model, print_info=True, plot=False, target=None):
                 target_return.to(dtype=torch.float32),
                 timesteps.to(dtype=torch.long),
             )  # get action
+            t2 = time.time()
+            # time.sleep(0.03)
 
             # if action_0 is None:
             #     action_0 = action
@@ -67,7 +69,6 @@ def eval_model(arm, model, print_info=True, plot=False, target=None):
             action = action.detach().cpu().numpy()
             # print(action)
 
-            t2 = time.time()
             # print(f"dt state to action: {t2 - t1}")
             reward, done, termination_reason, obj_pos, success = arm.step(action)  # perform action and get new state
             rewards[-1] = reward
@@ -77,16 +78,16 @@ def eval_model(arm, model, print_info=True, plot=False, target=None):
             episode_length += 1
 
         # DONE
-        # print("states:")
-        # print(states.to(dtype=torch.float32))
-        # print("actions:")
-        # print(actions.to(dtype=torch.float32))
+        print("states:")
+        print(states.to(dtype=torch.float32))
+        print("actions:")
+        print(actions.to(dtype=torch.float32))
         # print("target_return:")
         # print(target_return.to(dtype=torch.float32))
         # print("timesteps:")
         # print(timesteps.to(dtype=torch.long))
         # t2 = time.time()
-        # print(f"dt: {t2 - t1}")
+        print(f"dt: {t2 - t1}")
 
         arm.reset()
         n_episodes += 1
@@ -190,4 +191,4 @@ if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device=device)
 
-    eval_model(arm=arm_new, model=model, plot=False)
+    eval_model(arm=arm_new, model=model, plot=False, target=1.6)

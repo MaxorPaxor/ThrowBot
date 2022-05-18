@@ -434,6 +434,7 @@ class RoboticArm:
             vel_1, vel_2, vel_3, vel_4, vel_5, vel_6, gripper = velocity_vector
 
         trajectory = self.vel_trajectory(vel_1, vel_2, vel_3, vel_4, vel_5, vel_6, gripper)
+        # print(f"Trajectory: \n{trajectory}")
         if self.random_delay <= 0:
             self.pub_command.publish(trajectory)
 

@@ -19,30 +19,22 @@
       - finger_joint
 
   gains:
-    joint_1_s: { p: 8000, d: 1000, i: 100, i_clamp: 1000}
-    joint_2_l: { p: 8000, d: 1000, i: 100, i_clamp: 1000}
-    joint_3_u: { p: 5000, d: 500, i: 70, i_clamp: 100}
-    joint_4_r: { p: 300, d: 75, i: 4, i_clamp: 10}
-    joint_5_b: { p: 300, d: 10, i: 4, i_clamp: 10}
-    joint_6_t: { p: 20, d: 1.0, i: 0, i_clamp: 1}
-    finger_joint: { p: 40, d: 0.1, i: 0.0, i_clamp: 1}
+    joint_1_s: { p: 200, d: 70, i: 100, i_clamp: 1000}
+    joint_2_l: { p: 200, d: 70, i: 100, i_clamp: 1000}
+    joint_3_u: { p: 50, d: 50, i: 50, i_clamp: 1000}
+    joint_4_r: { p: 30, d: 7, i: 4, i_clamp: 1000}
+    joint_5_b: { p: 5, d: 3, i: 10, i_clamp: 1000}
+    joint_6_t: { p: 10, d: 1, i: 10, i_clamp: 10}
+    finger_joint: { p: 40, d: 0.1, i: 0.0, i_clamp: 10}
 
+#  Works good with 10Hz simulation
 #  gains:
-#    joint_1_s: { p: 8000, d: 1000, i: 0}
-#    joint_2_l: { p: 8000, d: 1000, i: 0}
-#    joint_3_u: { p: 5000, d: 500, i: 0}
-#    joint_4_r: { p: 300, d: 75, i: 0}
-#    joint_5_b: { p: 300, d: 10, i: 0}
-#    joint_6_t: { p: 20, d: 1.0, i: 0}
-#    finger_joint: { p: 40, d: 0.1, i: 0.0}
-
-#  gains:
-#    joint_1_s: { p: 400, d: 800, i: 5, i_clamp: 1 }
-#    joint_2_l: { p: 1200, d: 240, i: 5, i_clamp: 1 }
-#    joint_3_u: { p: 800, d: 160, i: 5, i_clamp: 1 }
-#    joint_4_r: { p: 300, d: 75, i: 5, i_clamp: 1 }
-#    joint_5_b: { p: 40, d: 12, i: 0.5, i_clamp: 0.1 }
-#    joint_6_t: { p: 8, d: 1.2, i: 0.5, i_clamp: 0.1 }
-#    finger_joint: { p: 40, d: 0.01, i: 0.0, i_clamp: 0.0}
+#    joint_1_s: { p: 8000, d: 1000, i: 100, i_clamp: 1000}
+#    joint_2_l: { p: 8000, d: 1000, i: 100, i_clamp: 1000}
+#    joint_3_u: { p: 5000, d: 500, i: 70, i_clamp: 100}
+#    joint_4_r: { p: 300, d: 75, i: 4, i_clamp: 10}
+#    joint_5_b: { p: 300, d: 10, i: 4, i_clamp: 10}
+#    joint_6_t: { p: 20, d: 1.0, i: 0, i_clamp: 1}
+#    finger_joint: { p: 40, d: 0.1, i: 0.0, i_clamp: 1}
 
 
