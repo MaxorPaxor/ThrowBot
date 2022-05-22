@@ -39,12 +39,12 @@ class Trainer:
             a_pred_new,
             a_real_act)
 
-        if self.step_number % 50 == 0:
-            print(f"\n")
-            print(f"Step number {self.step_number}")
-            print(f"Action loss: {loss_states}, \nPredicted action: {a_pred[:, :-1]}, \nReal action: {a_real[:, :-1]}")
-            print(f"Gripper loss: {loss_gripper}, \nPredicted gripper: {a_pred_new}, \nReal gripper: {a_real_act}")
-            print(f"---" * 10)
+        # if self.step_number % 50 == 0:
+        #     print(f"\n")
+            # print(f"Step number {self.step_number}")
+            # print(f"Action loss: {loss_states}, \nPredicted action: {a_pred[:, :-1]}, \nReal action: {a_real[:, :-1]}")
+            # print(f"Gripper loss: {loss_gripper}, \nPredicted gripper: {a_pred_new}, \nReal gripper: {a_real_act}")
+            # print(f"---" * 10)
 
             # 0.27 0.27
         return loss_gripper + loss_states

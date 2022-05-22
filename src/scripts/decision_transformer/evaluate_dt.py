@@ -78,16 +78,16 @@ def eval_model(arm, model, print_info=True, plot=False, target=None):
             episode_length += 1
 
         # DONE
-        print("states:")
-        print(states.to(dtype=torch.float32))
-        print("actions:")
-        print(actions.to(dtype=torch.float32))
+        # print("states:")
+        # print(states.to(dtype=torch.float32))
+        # print("actions:")
+        # print(actions.to(dtype=torch.float32))
         # print("target_return:")
         # print(target_return.to(dtype=torch.float32))
         # print("timesteps:")
         # print(timesteps.to(dtype=torch.long))
         # t2 = time.time()
-        print(f"dt: {t2 - t1}")
+        # print(f"dt: {t2 - t1}")
 
         arm.reset()
         n_episodes += 1
@@ -185,10 +185,10 @@ if __name__ == "__main__":
         attn_pdrop=0.0,
     )
 
-    checkpoint = torch.load("./weights/dt_trained_best_sim.pth", map_location=torch.device('cpu'))
+    checkpoint = torch.load("./weights/dt_trained_best.pth", map_location=torch.device('cpu'))
     model.load_state_dict(checkpoint['state_dict'])
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device=device)
 
-    eval_model(arm=arm_new, model=model, plot=False, target=1.6)
+    eval_model(arm=arm_new, model=model, plot=False)

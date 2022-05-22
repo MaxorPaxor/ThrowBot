@@ -135,7 +135,7 @@ if __name__ == "__main__":
         )
 
         # checkpoint = torch.load("../weights/dt_trained_simulation.pth", map_location=torch.device('cpu'))
-        checkpoint = torch.load("../weights/dt_trained_best_sim.pth", map_location=torch.device('cpu'))
+        checkpoint = torch.load("../weights/dt_trained_best.pth", map_location=torch.device('cpu'))
         model.load_state_dict(checkpoint['state_dict'])
 
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

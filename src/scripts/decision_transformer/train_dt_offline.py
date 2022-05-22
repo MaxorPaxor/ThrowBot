@@ -29,7 +29,7 @@ def run():
         session_name = 'memory_real_traj-1000_Hz-20_herK-3_apr20_max1.3'
         trajectories = pickle.load(open(f'./data/{session_name}.pkl', 'rb'))
     else:
-        session_name = 'memory_random_traj-8000_Hz-10_herK-8_noise-False'
+        session_name = 'memory_random_traj-8000_Hz-10_herK-8_noise-False_pid-tuned'
         trajectories = pickle.load(open(f'./data/{session_name}.pkl', 'rb'))
 
     # (state, action, reward, done)

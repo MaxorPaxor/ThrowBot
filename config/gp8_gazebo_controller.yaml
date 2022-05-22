@@ -19,11 +19,11 @@
       - finger_joint
 
   gains:
-    joint_1_s: { p: 200, d: 70, i: 100, i_clamp: 1000}
-    joint_2_l: { p: 200, d: 70, i: 100, i_clamp: 1000}
-    joint_3_u: { p: 50, d: 50, i: 50, i_clamp: 1000}
+    joint_1_s: { p: 133, d: 110, i: 369, i_clamp: 1000}
+    joint_2_l: { p: 698, d: 87, i: 379, i_clamp: 1000}
+    joint_3_u: { p: 227, d: 77, i: 472, i_clamp: 1000}
     joint_4_r: { p: 30, d: 7, i: 4, i_clamp: 1000}
-    joint_5_b: { p: 5, d: 3, i: 10, i_clamp: 1000}
+    joint_5_b: { p: 50, d: 7, i: 75, i_clamp: 1000}
     joint_6_t: { p: 10, d: 1, i: 10, i_clamp: 10}
     finger_joint: { p: 40, d: 0.1, i: 0.0, i_clamp: 10}
 
