@@ -16,14 +16,12 @@ from agent.model_dt.model_dt import DecisionTransformer
 from real_robot.robot_env_dt_real import RoboticArm
 
 
-def eval_model(arm, model, print_info=True):
+def eval_model(arm, model, target, print_info=True):
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.eval()
 
-    # x = np.random.rand() * 2 + 0.5
-    x = 1.6
-    target = np.array([x, 0.0, 0.0])
+    target = np.array([target, 0.0, 0.0])
     arm.update_target(target)
 
     states = torch.zeros((0, model.state_dim), device=device, dtype=torch.float32)
@@ -39,9 +37,10 @@ def eval_model(arm, model, print_info=True):
     done = False
     print('---')
 
-    state_0 = arm.get_state()
+    # state_0 = arm.get_state()
     while not done:
 
+        t1 = time.time()
         state = arm.get_state()  # get state
         # state = state_0
         state = np.append(state, arm.target[0])  # append target
@@ -50,7 +49,6 @@ def eval_model(arm, model, print_info=True):
         actions = torch.cat([actions, torch.zeros((1, model.act_dim), device=device)], dim=0)
         rewards = torch.cat([rewards, torch.zeros(1, device=device)])
 
-        t1 = time.time()
         action = model.get_action(
             states.to(dtype=torch.float32),
             actions.to(dtype=torch.float32),
@@ -58,21 +56,22 @@ def eval_model(arm, model, print_info=True):
             target_return.to(dtype=torch.float32),
             timesteps.to(dtype=torch.long),
         )  # get action
-        t2 = time.time()
 
         actions[-1] = action
         action = action.detach().cpu().numpy()
         done, termination_reason = arm.step(action)  # perform action and get new state
-        # print(f"state: {state}")
-        # print(f"action: {action}")
-        # print(f"dt: {t2-t1}")
-        # print(done)
 
         rewards[-1] = 0.0  # Reward
         target_return = torch.cat([target_return, target_return[0, -1].reshape(1, 1)], dim=1)
         timesteps = torch.cat(
             [timesteps, torch.ones((1, 1), device=device, dtype=torch.long) * (episode_length+1)], dim=1)
         episode_length += 1
+        t2 = time.time()
+
+        print(f"state: {state}")
+        print(f"action: {action}")
+        print(f"dt: {t2-t1}")
+        # print(done)
 
         if done:
             time.sleep(2)
@@ -107,8 +106,6 @@ def reset_arm():
 
 if __name__ == "__main__":
     arm_new = RoboticArm()
-    arm_new.number_states = 1  # 1 state for decision transformer
-    arm_new.state_mem = deque(maxlen=arm_new.number_states)
 
     # MODE = 'reset'
     MODE = 'throw'
@@ -134,11 +131,35 @@ if __name__ == "__main__":
             attn_pdrop=0.0,
         )
 
-        # checkpoint = torch.load("../weights/dt_trained_simulation.pth", map_location=torch.device('cpu'))
-        checkpoint = torch.load("../weights/dt_trained_best.pth", map_location=torch.device('cpu'))
+        # checkpoint = torch.load("../weights/dt_trained_best_pid-tuned.pth", map_location=torch.device('cpu'))
+        # checkpoint = torch.load("../weights/dt_trained_best_pid-high.pth", map_location=torch.device('cpu'))
+        checkpoint = torch.load("../weights/dt_trained_simulation_real_iter-4_.pth", map_location=torch.device('cpu'))
+        #  #3-best
         model.load_state_dict(checkpoint['state_dict'])
 
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         model = model.to(device=device)
 
-        eval_model(arm=arm_new, model=model)
+        eval_model(arm=arm_new, model=model, target=1.8)
+
+        # Slip
+        # state: tensor([[0.5000, -0.3000, -1.5000, 1.0000, 1.8000]], device='cuda:0')
+        # action: [-0.4032921   0.50672936  0.66336393  0.9073562]
+        # dt: 0.11827206611633301
+        # state: tensor([[0.5000, -0.3000, -1.5000, 1.0000, 1.8000]], device='cuda:0')
+        # action: [-0.3356938  0.8890054  0.92533    0.8658797]
+        # dt: 0.10948705673217773
+        # state: tensor([[0.4974, -0.2941, -1.4947, 1.0000, 1.8000]], device='cuda:0')
+        # action: [0.05525225 0.9583691  0.96439403 0.67207587]
+        # dt: 0.014964103698730469
+
+        # Not slip
+        # state: tensor([[0.5000, -0.3000, -1.5000, 1.0000, 1.8000]], device='cuda:0')
+        # action: [-0.4032921   0.50672936  0.66336393  0.9073562]
+        # dt: 0.11807537078857422
+        # state: tensor([[0.4970, -0.2933, -1.4940, 1.0000, 1.8000]], device='cuda:0')
+        # action: [-0.335622   0.8895633  0.9257202  0.8649251]
+        # dt: 0.10950779914855957
+        # state: tensor([[0.4085, -0.1411, -1.2851, 1.0000, 1.8000]], device='cuda:0')
+        # action: [0.07495938 0.9623772  0.96646744 0.5599041]
+        # dt: 0.015479326248168945

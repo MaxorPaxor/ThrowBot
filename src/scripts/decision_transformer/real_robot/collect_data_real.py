@@ -25,93 +25,96 @@ def collect_real_data(arm, model):
     agent.epsilon_arm = 100  # 50
     agent.soft_exploration_rate = 0
     agent.epsilon_arm_decay = 0
-    agent.MAX_MEMORY = 1000  # Number of trajectories
-    agent.memory = deque(maxlen=int(agent.MAX_MEMORY))  # collect 100k transitions
-    agent.k = 3
+    agent.MAX_MEMORY = 8000  # Number of trajectories
+    agent.memory = deque(maxlen=int(agent.MAX_MEMORY))  # collect agent.MAX_MEMORY transitions
+    agent.k = 8
 
     temp_mem = []
-    # target_list = np.arange(0.3, 2.3, 0.1)
-    target_list = np.arange(2.2, 2.3, 0.1)
+    # target_list = np.arange(0.3, 2.5, 0.1)
+    target_list = np.arange(0.3, 2.5, 0.1)
 
-    # arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
     for x in target_list:
-        _ = input("Press ENTER to throw.")
+        for amp in range(1, 4):
 
-        target = np.array([x, 0.0, 0.0])
-        arm.update_target(target)
+            _ = input("Press ENTER to throw.")
 
-        states = torch.zeros((0, model.state_dim), device=device, dtype=torch.float32)
-        actions = torch.zeros((0, model.act_dim), device=device, dtype=torch.float32)
-        rewards = torch.zeros(0, device=device, dtype=torch.float32)
-        ep_return = 1.
-        target_return = torch.tensor(ep_return, device=device, dtype=torch.float32).reshape(1, 1)
-        timesteps = torch.tensor(0, device=device, dtype=torch.long).reshape(1, 1)
+            target = np.array([x, 0.0, 0.0])
+            arm.update_target(target)
 
-        episode_length = 0
+            states = torch.zeros((0, model.state_dim), device=device, dtype=torch.float32)
+            actions = torch.zeros((0, model.act_dim), device=device, dtype=torch.float32)
+            rewards = torch.zeros(0, device=device, dtype=torch.float32)
+            ep_return = 1.
+            target_return = torch.tensor(ep_return, device=device, dtype=torch.float32).reshape(1, 1)
+            timesteps = torch.tensor(0, device=device, dtype=torch.long).reshape(1, 1)
 
-        arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
-        done = False
-        print('---')
-        while not done:
+            episode_length = 0
 
-            state_ = arm.get_state()  # get state
-            state = np.append(state_, arm.target[0])  # append target
-            state = torch.from_numpy(state).reshape(1, model.state_dim).to(device=device, dtype=torch.float32)
-            states = torch.cat([states, state], dim=0)
-            actions = torch.cat([actions, torch.zeros((1, model.act_dim), device=device)], dim=0)
-            rewards = torch.cat([rewards, torch.zeros(1, device=device)])
+            arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
+            done = False
+            print('---')
+            while not done:
 
-            action = model.get_action(
-                states.to(dtype=torch.float32),
-                actions.to(dtype=torch.float32),
-                rewards.to(dtype=torch.float32),
-                target_return.to(dtype=torch.float32),
-                timesteps.to(dtype=torch.long),
-            )  # get action
+                state_ = arm.get_state()  # get state
+                state = np.append(state_, arm.target[0])  # append target
+                state = torch.from_numpy(state).reshape(1, model.state_dim).to(device=device, dtype=torch.float32)
+                states = torch.cat([states, state], dim=0)
+                actions = torch.cat([actions, torch.zeros((1, model.act_dim), device=device)], dim=0)
+                rewards = torch.cat([rewards, torch.zeros(1, device=device)])
 
-            actions[-1] = action
-            action_ = action.detach().cpu().numpy()
+                action = model.get_action(
+                    states.to(dtype=torch.float32),
+                    actions.to(dtype=torch.float32),
+                    rewards.to(dtype=torch.float32),
+                    target_return.to(dtype=torch.float32),
+                    timesteps.to(dtype=torch.long),
+                )  # get action
 
-            if EXPLORATION:
-                pass
-                # TODO: implement real robot exploration
+                actions[-1] = action
+                action_ = action.detach().cpu().numpy()
 
-            done, termination_reason = arm.step(action_)  # perform action and get new state
-            # print(action_)
+                if EXPLORATION:
+                    action_ = action_ * np.array([amp, amp, amp, 1])
+                    action_ = np.clip(action_, -0.9, 0.9)
+                    if episode_length == 0 and action_[-1] <= arm.gripper_thresh:
+                        action_[-1] = 1.0
 
-            if done:
-                object_position = float(input(f'Target: {x}. Input object position '))
-                object_position = np.array([object_position, 0, 0])
-                distance_from_target = calc_dist_from_goal(object_position, arm.target)
+                done, termination_reason = arm.step(action_)  # perform action and get new state
+                print(action_)
 
-                if distance_from_target < arm.target_radius:
-                    reward_ = 1.0  # Reward
+                if done:
+                    object_position_ = float(input(f'Target: {x}. Input object position '))
+                    object_position = np.array([object_position_, 0, 0])
+                    distance_from_target = calc_dist_from_goal(object_position, arm.target)
+
+                    if distance_from_target < arm.target_radius:
+                        reward_ = 1.0  # Reward
+                    else:
+                        reward_ = -1.0  # Reward
+
                 else:
-                    reward_ = -1.0  # Reward
+                    reward_ = 0.0  # Reward
 
-            else:
-                reward_ = 0.0  # Reward
+                rewards[-1] = reward_
+                target_return = torch.cat([target_return, target_return[0, -1].reshape(1, 1)], dim=1)
+                timesteps = torch.cat(
+                    [timesteps, torch.ones((1, 1), device=device, dtype=torch.long) * (episode_length+1)], dim=1)
+                episode_length += 1
 
-            rewards[-1] = reward_
-            target_return = torch.cat([target_return, target_return[0, -1].reshape(1, 1)], dim=1)
-            timesteps = torch.cat(
-                [timesteps, torch.ones((1, 1), device=device, dtype=torch.long) * (episode_length+1)], dim=1)
-            episode_length += 1
+                temp_mem.append((state_, action_, reward_, done))
 
-            temp_mem.append((state_, action_, reward_, done))
+            # DONE
+            agent.generate_her_memory(temp_mem, obj_final_pos=object_position)
+            temp_mem = []
+            reset_arm()
+            n_episodes += 1
 
-        # DONE
-        agent.generate_her_memory(temp_mem, obj_final_pos=object_position)
-        temp_mem = []
-        reset_arm()
-        n_episodes += 1
+            pickle.dump(agent.memory, open(f"../data/memory_real_"
+                                           f"traj-{len(target_list)}_"
+                                           f"Hz-{arm.UPDATE_RATE}_"
+                                           f"herK-{agent.k}.pkl", 'wb'))
 
-        pickle.dump(agent.memory, open(f"../data/memory_real_"
-                                       f"traj-{len(target_list)}_"
-                                       f"Hz-{arm.UPDATE_RATE}_"
-                                       f"herK-{agent.k}.pkl", 'wb'))
-
-        print('\n')
+            print('\n')
 
 
 def reset_arm():
@@ -137,26 +140,25 @@ def calc_dist_from_goal(obj_pos, target):
 if __name__ == "__main__":
 
     arm_new = RoboticArm()
-    arm_new.number_states = 1  # 1 state for decision transformer
-    arm_new.state_mem = deque(maxlen=arm_new.number_states)
 
+    hidden_size = 1024
+    n_head = 1
     model = DecisionTransformer(
-        state_dim=len(arm_new .joints) * arm_new.number_states + 1,
-        act_dim=len(arm_new .joints),
-        max_length=10,
-        max_ep_len=16,
-        hidden_size=128,
-        n_layer=3,
-        n_head=1,
-        n_inner=4 * 128,
+        state_dim=len(arm_new.joints) * arm_new.number_states + 1,
+        act_dim=len(arm_new.joints),
+        max_length=20,
+        max_ep_len=64,
+        hidden_size=hidden_size,
+        n_layer=1,
+        n_head=n_head,
+        n_inner=4 * hidden_size,
         activation_function='relu',
         n_positions=1024,
         resid_pdrop=0.0,
         attn_pdrop=0.0,
     )
 
-    # checkpoint = torch.load("./weights/dt_random.pth", map_location=torch.device('cpu'))
-    checkpoint = torch.load("../weights/dt_trained_simulation_good_1.pth", map_location=torch.device('cpu'))
+    checkpoint = torch.load("../weights/dt_trained_best_pid-high.pth", map_location=torch.device('cpu'))
     model.load_state_dict(checkpoint['state_dict'])
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

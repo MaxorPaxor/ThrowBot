@@ -398,6 +398,7 @@ class RobotiqGripper(mm.Instrument):
         position:
             End position of the gripper
         """
+        t1 = time.time()
         objectDetected = False
 
         # TO DO: Check if gripper is activated and if not activate?
@@ -405,26 +406,26 @@ class RobotiqGripper(mm.Instrument):
             print("maximum position is 255")
         else:
             # rARD(5) rATR(4) rGTO(3) rACT(0)
+
             self.write_registers(1000, [int("00001001" + "00000000", 2),
                                         position,
                                         int(self._intToHex(speed) + self._intToHex(force), 16)])
-            timer = time.time()
-            loop = True
-            while loop or (time.time() - timer) > self.timeOut:
-                self.readAll()
-                gOBJ = self.paramDic["gOBJ"]
-                if gOBJ == 1 or gOBJ == 2:
-                    objectDetected = True
-                    loop = False
-                elif gOBJ == 3:
-                    objectDetected = False
-                    loop = False
-                elif (time.time() - timer) > self.timeOut:
-                    loop = False
-                    print("Gripper never reach its requested position and no\
-                           object have been detected")
-
-        position = self.paramDic["gPO"]
+        #     timer = time.time()
+        #     loop = True
+        #     while loop or (time.time() - timer) > self.timeOut:
+        #         # self.readAll()
+        #         gOBJ = self.paramDic["gOBJ"]
+        #         if gOBJ == 1 or gOBJ == 2:
+        #             objectDetected = True
+        #             loop = False
+        #         elif gOBJ == 3:
+        #             objectDetected = False
+        #             loop = False
+        #         elif (time.time() - timer) > self.timeOut:
+        #             loop = False
+        #             print("Gripper never reach its requested position and no\
+        #                    object have been detected")
+        # position = self.paramDic["gPO"]
 
         # TO DO: Check if gripper is in position. If no wait.
 

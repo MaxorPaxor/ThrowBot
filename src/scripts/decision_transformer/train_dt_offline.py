@@ -10,7 +10,7 @@ from agent.trainer import Trainer
 from evaluate_dt import eval_model
 from env.robot_env_dt import RoboticArm
 
-FINETUNE = False
+FINETUNE = True
 
 
 def run():
@@ -26,7 +26,7 @@ def run():
 
     # load dataset
     if FINETUNE:
-        session_name = 'memory_real_traj-1000_Hz-20_herK-3_apr20_max1.3'
+        session_name = 'memory_real_traj-22_Hz-10_herK-8'
         trajectories = pickle.load(open(f'./data/{session_name}.pkl', 'rb'))
     else:
         session_name = 'memory_random_traj-8000_Hz-10_herK-8_noise-False_pid-tuned'
@@ -104,7 +104,6 @@ def run():
 
         return s, a, r, d, rtg, ts, mask
 
-    # 0.386 0.028
     embed_dim = 1024  # 128
     n_layer = 1  # 3
     n_head = 1  # 1
@@ -132,7 +131,7 @@ def run():
             attn_pdrop=dropout,
         )
         if FINETUNE:
-            checkpoint = torch.load("./weights/dt_trained_simulation.pth", map_location=torch.device('cpu'))
+            checkpoint = torch.load("./weights/dt_trained_best_pid-high.pth", map_location=torch.device('cpu'))
             model.load_state_dict(checkpoint['state_dict'])
 
         model = model.to(device=device)
@@ -147,23 +146,23 @@ def run():
             device=device
         )
 
-        if not FINETUNE:
+        # Train
+        if FINETUNE:
+            max_iters = 10
+            num_of_steps = 500
+        else:
             arm_new = RoboticArm()
-            arm_new.number_states = 1  # 1 state for decision transformer
-            arm_new.state_mem = deque(maxlen=arm_new.number_states)
+            max_iters = 100
+            num_of_steps = 64
 
         # First evaluation
         evaluation_list = []
         hit_rate_list = []
+        loss_list = []
         score_eval = None
         hit_rate = None
         best_score_eval = score_eval
         best_hit_rate = hit_rate
-
-        # Train
-        max_iters = 100
-        loss_list = []
-        num_of_steps = 64
 
         print('=' * 40)
         for iter in range(max_iters):

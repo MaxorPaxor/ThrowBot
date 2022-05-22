@@ -50,7 +50,7 @@ class RoboticArm:
             self.max_speed = np.array([455, 385, 520, 550, 550, 1000, 1])  # deg/s
 
         self.max_speed_factor = 1.0  # % of max speed for safety reasons
-        self.gripper_thresh = 0.85  # Gripper open threshold
+        self.gripper_thresh = 0.82  # Gripper open threshold
 
         # Connect to gripper
         self.gripper_object = RobotiqGripper("/dev/ttyUSB0", slaveaddress=9)
@@ -122,20 +122,6 @@ class RoboticArm:
         pos_4 = self.angles[3] + vel_4 * 1.0 / self.UPDATE_RATE
         pos_5 = self.angles[4] + vel_5 * 1.0 / self.UPDATE_RATE
         pos_6 = self.angles[5] + vel_6 * 1.0 / self.UPDATE_RATE
-
-        # Boundaries j3 -0.5 - 1.8 / j5 -1.7 - 1.4
-        # if pos_2 < -0.5:
-        #     pos_2 = -0.5
-        # if pos_2 > 0.5:
-        #     pos_2 = 0.5
-        # if pos_3 < -0.5:
-        #     pos_3 = -0.5
-        # if pos_3 > 1.8:
-        #     pos_3 = 1.8
-        # if pos_5 < -1.7:
-        #     pos_5 = -1.7
-        # if pos_5 > 1.4:
-        #     pos_5 = 1.4
 
         point.positions.append(pos_1)
         point.positions.append(pos_2)
@@ -295,6 +281,7 @@ class RoboticArm:
         Performs 1 step for the robotic arm and checks if stop conditions are met
         Returns reward, done flag and termination reason
         """
+
         velocity_vector = self.proj_on_max_speed(velocity_vector)  # Rescale for maximum speed
         if self.curr_step > 0:  # Not for first step
             velocity_vector = self.smooth_velocity(velocity_vector)  # Apply complimentary filter on velocity vector
@@ -311,8 +298,12 @@ class RoboticArm:
         self.pub_command.publish(trajectory)
         # print(trajectory)
 
-        # self.rate.sleep()
-        time.sleep(1.0 / self.UPDATE_RATE)
+        # print(gripper)
+        # print(self.gripper_thresh)
+        if gripper < self.gripper_thresh:
+            self.rate.sleep()
+        else:
+            time.sleep(1.0 / self.UPDATE_RATE)
         self.curr_time += 1.0 / self.UPDATE_RATE
         self.curr_step += 1
 
@@ -322,8 +313,8 @@ class RoboticArm:
         - Gripper was opened
         - Object touched the ground
         """
-        if self.curr_step >= self.number_steps or gripper < self.gripper_thresh:
 
+        if self.curr_step >= self.number_steps or gripper < self.gripper_thresh:
             # If object is released, wait for it to fall and reward the action
             if gripper < self.gripper_thresh:
                 self.gripper_object.goTomm(350, 255, 255)
@@ -337,7 +328,6 @@ class RoboticArm:
         else:  # Gripper is closed and time is not up
             termination_reason = None
             done = False
-
         return done, termination_reason
 
     def first_step(self, velocity_vector):
