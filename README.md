@@ -174,8 +174,12 @@ and create K more Markov tuples ((S||T), a, R, (S'||T), done) and insert them to
 
 ## Dependencies
 ### ROS Dependencies
-1. **Motoman repo:**
-https://github.com/ros-industrial/motoman/tree/kinetic-devel
+1. **Motoman**
+fixed motoman point-streaming:
+https://github.com/MaxorPaxor/motoman_ps
+
+    Motoman original repo: 
+    https://github.com/ros-industrial/motoman/tree/kinetic-devel
 
 2. **Robotiq gripper - 2f_140_gripper:**
 https://github.com/ros-industrial/robotiq
