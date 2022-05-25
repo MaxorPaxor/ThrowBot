@@ -32,9 +32,11 @@ def collect_real_data(arm, model):
     temp_mem = []
     # target_list = np.arange(0.3, 2.5, 0.1)
     target_list = np.arange(0.3, 2.5, 0.1)
+    # amp_range = np.arange(1, 4, 1)
+    amp_range = np.arange(2.0, 4, 0.5)
 
     for x in target_list:
-        for amp in range(1, 4):
+        for amp in amp_range:
 
             _ = input("Press ENTER to throw.")
 
@@ -75,8 +77,8 @@ def collect_real_data(arm, model):
 
                 if EXPLORATION:
                     action_ = action_ * np.array([amp, amp, amp, 1])
-                    action_ = np.clip(action_, -0.9, 0.9)
-                    if episode_length == 0 and action_[-1] <= arm.gripper_thresh:
+                    action_ = np.clip(action_, -1.0, 1.0)
+                    if episode_length <= 1 and action_[-1] <= arm.gripper_thresh:
                         action_[-1] = 1.0
 
                 done, termination_reason = arm.step(action_)  # perform action and get new state
@@ -110,7 +112,7 @@ def collect_real_data(arm, model):
             n_episodes += 1
 
             pickle.dump(agent.memory, open(f"../data/memory_real_"
-                                           f"traj-{len(target_list)}_"
+                                           f"traj-{len(target_list) * len(amp_range)}_"
                                            f"Hz-{arm.UPDATE_RATE}_"
                                            f"herK-{agent.k}.pkl", 'wb'))
 
@@ -119,10 +121,10 @@ def collect_real_data(arm, model):
 
 def reset_arm():
     print("Restarting arm...")
-    time.sleep(4)
+    time.sleep(1)
     arm_new.step(np.array([0.0, 0.0, 0.0, 1.0]))
     arm_new.reset_arm()
-    time.sleep(4)
+    time.sleep(2)
     print("Done.")
 
 

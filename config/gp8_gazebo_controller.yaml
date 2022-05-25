@@ -18,6 +18,7 @@
       - joint_6_t
       - finger_joint
 
+# Fine-tuned PIDS
   gains:
     joint_1_s: { p: 133, d: 110, i: 369, i_clamp: 1000}
     joint_2_l: { p: 698, d: 87, i: 379, i_clamp: 1000}

@@ -9,7 +9,7 @@ from env.robot_env_dt import RoboticArm
 from agent.model_dt.model_dt import DecisionTransformer
 
 
-def eval_model(arm, model, print_info=True, plot=False, target=None):
+def eval_model(arm, model, state_mean=None, state_std=None, print_info=True, plot=False, target=None):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.eval()
 
@@ -45,6 +45,9 @@ def eval_model(arm, model, print_info=True, plot=False, target=None):
 
             state = arm.get_state()  # get state
             state = np.append(state, arm.target[0])  # append target
+            if state_mean is not None and state_std is not None:
+                state = (state - state_mean) / state_std
+
             state = torch.from_numpy(state).reshape(1, model.state_dim).to(device=device, dtype=torch.float32)
             states = torch.cat([states, state], dim=0)
             actions = torch.cat([actions, torch.zeros((1, model.act_dim), device=device)], dim=0)
@@ -166,7 +169,6 @@ if __name__ == "__main__":
     arm_new.state_mem = deque(maxlen=arm_new.number_states)
     arm_new.noise_actions = False
     arm_new.random_delay = 0
-    arm_new.target_radius = 0.1
 
     hidden_size = 1024
     n_head = 1
@@ -185,7 +187,8 @@ if __name__ == "__main__":
         attn_pdrop=0.0,
     )
 
-    checkpoint = torch.load("./weights/dt_trained_best.pth", map_location=torch.device('cpu'))
+    # checkpoint = torch.load("./weights/dt_trained_best_pid-high.pth", map_location=torch.device('cpu'))
+    checkpoint = torch.load("./weights/dt_trained_best_pid-tuned.pth", map_location=torch.device('cpu'))
     model.load_state_dict(checkpoint['state_dict'])
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

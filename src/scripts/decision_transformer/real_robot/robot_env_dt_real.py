@@ -49,7 +49,8 @@ class RoboticArm:
                                     'joint_5_b', 'joint_6_t', 'finger_joint'])
             self.max_speed = np.array([455, 385, 520, 550, 550, 1000, 1])  # deg/s
 
-        self.max_speed_factor = 1.0  # % of max speed for safety reasons
+        self.max_speed_factor = 0.9  # % of
+        # max speed for safety reasons
         self.gripper_thresh = 0.82  # Gripper open threshold
 
         # Connect to gripper
@@ -248,7 +249,9 @@ class RoboticArm:
                            (obj_pos[1] - target[1]) ** 2)  # +
         # (obj_pos[2] - target[2]) ** 2)
 
-        if distance <= self.target_radius:  # and obj_pos[0] > self.initial_pos[0]:
+        if obj_pos[0] < 0.3:
+            return -1.0
+        elif distance <= self.target_radius:  # and obj_pos[0] > self.initial_pos[0]:
             return 1.0
         else:
             return -1.0
@@ -301,9 +304,11 @@ class RoboticArm:
         # print(gripper)
         # print(self.gripper_thresh)
         if gripper < self.gripper_thresh:
+            # time.sleep(1.0 / self.UPDATE_RATE)
             self.rate.sleep()
         else:
             time.sleep(1.0 / self.UPDATE_RATE)
+            # self.rate.sleep()
         self.curr_time += 1.0 / self.UPDATE_RATE
         self.curr_step += 1
 
@@ -350,7 +355,7 @@ class RoboticArm:
         # print(trajectory)
 
         # self.rate.sleep()
-        time.sleep(1.0 / self.UPDATE_RATE)
+        time.sleep(5.0 / self.UPDATE_RATE)
         self.curr_time += 1.0 / self.UPDATE_RATE
         self.curr_step += 1
 

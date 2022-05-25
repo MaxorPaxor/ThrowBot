@@ -35,7 +35,7 @@ class RoboticArm:
 
         # HER attributes
         self.her = True
-        self.target_radius = 0.1  # meters
+        self.target_radius = 0.05  # meters
 
         self.target = np.array([2, 0, 0])
         # Note: Target will be static unless agent class will override it when using HER
@@ -200,20 +200,6 @@ class RoboticArm:
         pos_4 = self.angles[4] + vel_4 * 1.0 / self.UPDATE_RATE
         pos_5 = self.angles[5] + vel_5 * 1.0 / self.UPDATE_RATE
         pos_6 = self.angles[6] + vel_6 * 1.0 / self.UPDATE_RATE
-
-        # Boundaries j3 -0.5 - 1.8 / j5 -1.7 - 1.4
-        # if pos_2 < -0.5:
-        #     pos_2 = -0.5
-        # if pos_2 > 0.5:
-        #     pos_2 = 0.5
-        # if pos_3 < -0.5:
-        #     pos_3 = -0.5
-        # if pos_3 > 1.8:
-        #     pos_3 = 1.8
-        # if pos_5 < -1.7:
-        #     pos_5 = -1.7
-        # if pos_5 > 1.4:
-        #     pos_5 = 1.4
 
         point.positions.append(pos_1)
         point.positions.append(pos_2)
@@ -563,16 +549,67 @@ class RoboticArm:
         Tests
         """
 
-        swing_2 = self.trajectory(j1=0.0, j2=-0.5, j3=-0.3, j4=0.0, j5=-1.5, j6=0.0, gripper=1.0)
-        swing_3 = self.trajectory(j1=0.0, j2=0.5, j3=1.3, j4=0.0, j5=-1.5, j6=0.0, gripper=1.0)
-        swing_5 = self.trajectory(j1=0.0, j2=0.5, j3=-0.3, j4=0.0, j5=1.5, j6=0.0, gripper=1.0)
+        traj_2_l_real = np.array(
+            [0.49135804, 0.49135804, 0.49135804, 0.49135804, 0.49135804, 0.49135804, 0.49135804, 0.49135804, 0.49135804,
+             0.49135804, 0.48938784, 0.39135209, 0.2164495, 0.16115429, 0.15337412, 0.15488413, 0.15545937, 0.15551689,
+             0.15545937, 0.15538748, 0.16073723, 0.22904731, 0.39841318, 0.48717314, 0.49240786, 0.49173194, 0.49137244,
+             0.49131489, 0.49131489])
+        traj_3_u_real = np.array(
+            [-0.28836921, -0.28836921, -0.28836921, -0.28836921, -0.28836921, -0.28836921, -0.28836921, -0.28836921,
+             -0.28836921, -0.28836921, -0.28463015, -0.15138473, 0.07690997, 0.15560319, 0.16923644, 0.16624518,
+             0.16532478,
+             0.16528644, 0.16530561, 0.16534396, 0.15658109, 0.06279734, -0.15874784, -0.28144714, -0.29143718,
+             -0.28904033,
+             -0.2883884, -0.28836921, -0.28836921])
+        traj_5_b_real = np.array(
+            [-1.48707461, -1.48707461, -1.48707461, -1.48707461, -1.48707461, -1.48707461, -1.48707461, -1.48707461,
+             -1.48707461, -1.48707461, -1.48458183, -1.34539711, -1.08936608, -1.01273894, -1.00667489, -1.00689065,
+             -1.00705838, -1.00710642, -1.00710642, -1.00710642, -1.01163638, -1.10453808, -1.35884333, -1.4825685,
+             -1.48757792, -1.4872663, -1.48709857, -1.48707461, -1.48705065])
 
-        swing_23 = self.trajectory(j1=0.0, j2=-0.5, j3=1.3, j4=0.0, j5=-1.5, j6=0.0, gripper=1.0)
-        swing_235 = self.trajectory(j1=0.0, j2=-0.5, j3=1.3, j4=0.0, j5=1.5, j6=0.0, gripper=1.0)
-        # j1=0.0, j2=0.5, j3=-0.3, j4=0.0, j5=-1.5, j6=0.0, gripper=-1.0
-        self.pub_command.publish(swing_235)
-        time.sleep(1)
-        # self.reset()
+        # Extend last position to reduce oscillation errors
+        traj_2_l_real = np.append(traj_2_l_real, [traj_2_l_real[-1]] * 20)
+        traj_3_u_real = np.append(traj_3_u_real, [traj_3_u_real[-1]] * 20)
+        traj_5_b_real = np.append(traj_5_b_real, [traj_5_b_real[-1]] * 20)
+
+        traj_2_l, traj_3_u, traj_5_b = [], [], []
+        for i in range(1, 50):
+
+            state = robotic_arm.get_state()
+            print(state)
+            traj_2_l.append(state[0])
+            traj_3_u.append(state[1])
+            traj_5_b.append(state[2])
+
+            if i == 10:
+                print(i)
+                action = np.array([-0.5, 0.5, 0.5, 0.99])
+                reward, done, termination_reason, distance, success = robotic_arm.step(action)
+
+            elif i == 20:
+                print(i)
+                action = np.array([0.5, -0.5, -0.5, 0.99])
+                reward, done, termination_reason, distance, success = robotic_arm.step(action)
+
+            else:
+                time.sleep(1.0 / robotic_arm.UPDATE_RATE)
+
+        traj_2_l = np.array(traj_2_l)
+        traj_3_u = np.array(traj_3_u)
+        traj_5_b = np.array(traj_5_b)
+
+        error_2_l = np.sum((traj_2_l_real[:30] - traj_2_l[:30]) ** 2) + 3 * np.sum(
+            (traj_2_l_real[30:] - traj_2_l[30:]) ** 2)
+        error_3_u = np.sum((traj_3_u_real[:30] - traj_3_u[:30]) ** 2) + 3 * np.sum(
+            (traj_3_u_real[30:] - traj_3_u[30:]) ** 2)
+        error_5_b = np.sum((traj_5_b_real[:30] - traj_5_b[:30]) ** 2) + 3 * np.sum(
+            (traj_5_b_real[30:] - traj_5_b[30:]) ** 2)
+
+        total_error = error_2_l + error_3_u + error_5_b
+
+        print(f"Total Error: {total_error} \n"
+              f"error_2_l: {error_2_l}, error_3_u: {error_3_u}, error_5_b: {error_5_b} \n"
+              f"-----")
 
     def test_throw(self):
         """
@@ -593,64 +630,4 @@ if __name__ == '__main__':
     robotic_arm = RoboticArm()
     robotic_arm.reset()
     # robotic_arm.test_throw()
-    # robotic_arm.test_pid()
-
-    traj_2_l_real = np.array(
-        [0.49135804, 0.49135804, 0.49135804, 0.49135804, 0.49135804, 0.49135804, 0.49135804, 0.49135804, 0.49135804,
-         0.49135804, 0.48938784, 0.39135209, 0.2164495, 0.16115429, 0.15337412, 0.15488413, 0.15545937, 0.15551689,
-         0.15545937, 0.15538748, 0.16073723, 0.22904731, 0.39841318, 0.48717314, 0.49240786, 0.49173194, 0.49137244,
-         0.49131489, 0.49131489])
-    traj_3_u_real = np.array(
-        [-0.28836921, -0.28836921, -0.28836921, -0.28836921, -0.28836921, -0.28836921, -0.28836921, -0.28836921,
-         -0.28836921, -0.28836921, -0.28463015, -0.15138473, 0.07690997, 0.15560319, 0.16923644, 0.16624518, 0.16532478,
-         0.16528644, 0.16530561, 0.16534396, 0.15658109, 0.06279734, -0.15874784, -0.28144714, -0.29143718, -0.28904033,
-         -0.2883884, -0.28836921, -0.28836921])
-    traj_5_b_real = np.array(
-        [-1.48707461, -1.48707461, -1.48707461, -1.48707461, -1.48707461, -1.48707461, -1.48707461, -1.48707461,
-         -1.48707461, -1.48707461, -1.48458183, -1.34539711, -1.08936608, -1.01273894, -1.00667489, -1.00689065,
-         -1.00705838, -1.00710642, -1.00710642, -1.00710642, -1.01163638, -1.10453808, -1.35884333, -1.4825685,
-         -1.48757792, -1.4872663, -1.48709857, -1.48707461, -1.48705065])
-
-    # Extend last position to reduce oscillation errors
-    traj_2_l_real = np.append(traj_2_l_real, [traj_2_l_real[-1]] * 20)
-    traj_3_u_real = np.append(traj_3_u_real, [traj_3_u_real[-1]] * 20)
-    traj_5_b_real = np.append(traj_5_b_real, [traj_5_b_real[-1]] * 20)
-
-    traj_2_l, traj_3_u, traj_5_b = [], [], []
-    for i in range(1, 50):
-
-        state = robotic_arm.get_state()
-        print(state)
-        traj_2_l.append(state[0])
-        traj_3_u.append(state[1])
-        traj_5_b.append(state[2])
-
-        if i == 10:
-            print(i)
-            action = np.array([-0.5, 0.5, 0.5, 0.99])
-            reward, done, termination_reason, distance, success = robotic_arm.step(action)
-
-        elif i == 20:
-            print(i)
-            action = np.array([0.5, -0.5, -0.5, 0.99])
-            reward, done, termination_reason, distance, success = robotic_arm.step(action)
-
-        else:
-            time.sleep(1.0 / robotic_arm.UPDATE_RATE)
-
-    traj_2_l = np.array(traj_2_l)
-    traj_3_u = np.array(traj_3_u)
-    traj_5_b = np.array(traj_5_b)
-
-    error_2_l = np.sum((traj_2_l_real[:30] - traj_2_l[:30]) ** 2) + 3 * np.sum(
-        (traj_2_l_real[30:] - traj_2_l[30:]) ** 2)
-    error_3_u = np.sum((traj_3_u_real[:30] - traj_3_u[:30]) ** 2) + 3 * np.sum(
-        (traj_3_u_real[30:] - traj_3_u[30:]) ** 2)
-    error_5_b = np.sum((traj_5_b_real[:30] - traj_5_b[:30]) ** 2) + 3 * np.sum(
-        (traj_5_b_real[30:] - traj_5_b[30:]) ** 2)
-
-    total_error = error_2_l + error_3_u + error_5_b
-
-    print(f"Total Error: {total_error} \n"
-          f"error_2_l: {error_2_l}, error_3_u: {error_3_u}, error_5_b: {error_5_b} \n"
-          f"-----")
+    robotic_arm.test_pid()

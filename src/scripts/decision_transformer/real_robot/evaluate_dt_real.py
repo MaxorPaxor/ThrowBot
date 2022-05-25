@@ -59,6 +59,12 @@ def eval_model(arm, model, target, print_info=True):
 
         actions[-1] = action
         action = action.detach().cpu().numpy()
+        amp = 1.0
+        action = action * np.array([amp, amp, amp, 1])
+        action = np.clip(action, -1.0, 1.0)
+        # if episode_length <= 1 and action[-1] <= arm.gripper_thresh:
+        #     action[-1] = 1.0
+
         done, termination_reason = arm.step(action)  # perform action and get new state
 
         rewards[-1] = 0.0  # Reward
@@ -133,33 +139,11 @@ if __name__ == "__main__":
 
         # checkpoint = torch.load("../weights/dt_trained_best_pid-tuned.pth", map_location=torch.device('cpu'))
         # checkpoint = torch.load("../weights/dt_trained_best_pid-high.pth", map_location=torch.device('cpu'))
-        checkpoint = torch.load("../weights/dt_trained_simulation_real_iter-4_.pth", map_location=torch.device('cpu'))
-        #  #3-best
+        checkpoint = torch.load("../weights/dt_trained_simulation_real_cur-best.pth", map_location=torch.device('cpu'))
         model.load_state_dict(checkpoint['state_dict'])
 
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         model = model.to(device=device)
 
-        eval_model(arm=arm_new, model=model, target=1.8)
+        eval_model(arm=arm_new, model=model, target=1.0)
 
-        # Slip
-        # state: tensor([[0.5000, -0.3000, -1.5000, 1.0000, 1.8000]], device='cuda:0')
-        # action: [-0.4032921   0.50672936  0.66336393  0.9073562]
-        # dt: 0.11827206611633301
-        # state: tensor([[0.5000, -0.3000, -1.5000, 1.0000, 1.8000]], device='cuda:0')
-        # action: [-0.3356938  0.8890054  0.92533    0.8658797]
-        # dt: 0.10948705673217773
-        # state: tensor([[0.4974, -0.2941, -1.4947, 1.0000, 1.8000]], device='cuda:0')
-        # action: [0.05525225 0.9583691  0.96439403 0.67207587]
-        # dt: 0.014964103698730469
-
-        # Not slip
-        # state: tensor([[0.5000, -0.3000, -1.5000, 1.0000, 1.8000]], device='cuda:0')
-        # action: [-0.4032921   0.50672936  0.66336393  0.9073562]
-        # dt: 0.11807537078857422
-        # state: tensor([[0.4970, -0.2933, -1.4940, 1.0000, 1.8000]], device='cuda:0')
-        # action: [-0.335622   0.8895633  0.9257202  0.8649251]
-        # dt: 0.10950779914855957
-        # state: tensor([[0.4085, -0.1411, -1.2851, 1.0000, 1.8000]], device='cuda:0')
-        # action: [0.07495938 0.9623772  0.96646744 0.5599041]
-        # dt: 0.015479326248168945

@@ -55,8 +55,7 @@ class Trainer:
         for i in range(num_steps):
             train_loss = self.train_step(back_prop=back_prop)
             train_losses.append(train_loss)
-            if (i+1) % 10 == 0:
-                print("\r \rTraining... step number {0}/{1}".format(str(i+1), str(num_steps)), end='')
+            print("\r \rTraining... step number {0}/{1}".format(str(i+1), str(num_steps)), end='')
 
         print(" Done.")
         return train_loss

@@ -26,10 +26,10 @@ def run():
 
     # load dataset
     if FINETUNE:
-        session_name = 'memory_real_traj-22_Hz-10_herK-8'
+        session_name = 'memory_real_traj-76_Hz-10_herK-8'
         trajectories = pickle.load(open(f'./data/{session_name}.pkl', 'rb'))
     else:
-        session_name = 'memory_random_traj-8000_Hz-10_herK-8_noise-False_pid-tuned'
+        session_name = 'memory_random_attempts-1000_Hz-10_herK-8_noise-False'
         trajectories = pickle.load(open(f'./data/{session_name}.pkl', 'rb'))
 
     # (state, action, reward, done)
@@ -37,21 +37,46 @@ def run():
     successes = 0
     open_gripper_count = 0
     closed_gripper_count = 0
+    s0 = []
+    s1 = []
+    s2 = []
+    s3 = []
     for trajectory in trajectories:
         for transition in trajectory:
+
+            # Count successes/ fails
             if transition[2] == -1:
                 fails += 1
             if transition[2] == 1:
                 successes += 1
 
+            # Count gripper open/closed ratio
             if transition[1][-1] == -1:
                 open_gripper_count += 1
             if transition[1][-1] == 1:
                 closed_gripper_count += 1
 
+            s0.append(transition[0][:4][0])
+            s1.append(transition[0][:4][1])
+            s2.append(transition[0][:4][2])
+            s3.append(transition[0][:4][3])
+
+    s0_mean = np.array(s0).mean()
+    s0_std = np.array(s0).std()
+    s1_mean = np.array(s1).mean()
+    s1_std = np.array(s1).std()
+    s2_mean = np.array(s2).mean()
+    s2_std = np.array(s2).std()
+    s3_mean = np.array(s3).mean()
+    s3_std = np.array(s3).std()
+
+    state_mean = np.array([s0_mean, s1_mean, s2_mean, s3_mean, 0])
+    state_std = np.array([s0_std, s1_std, s2_std, s3_std, 1])
+
     print(f"Open gripper count: {open_gripper_count}, Closed gripper count: {closed_gripper_count}, "
-          f"O/C Ratio: {open_gripper_count / (open_gripper_count + closed_gripper_count)}")
+          f"O/C Ratio: {closed_gripper_count / (open_gripper_count + closed_gripper_count)}")
     print(f"Total real throws: {(fails + successes)/4} ,Successes: {successes}, Fails: {fails}")
+    print(f"State mean: {state_mean}, State STD: {state_std}")
 
     def get_batch(batch_size=256, max_len=K):
 
@@ -67,11 +92,14 @@ def run():
             traj = trajectories[batch_inds[i]]
 
             # get sequences from dataset
-            s.append(np.array([t[0][np.array([0, 1, 2, 3, -1])] for t in traj]).reshape(1, -1, state_dim))
+            state = np.array([t[0][np.array([0, 1, 2, 3, -1])] for t in traj])
+            # state = (state - state_mean) / state_std
+            s.append(state.reshape(1, -1, state_dim))
+
+            # s.append(np.array([t[0][np.array([0, 1, 2, 3, -1])] for t in traj]).reshape(1, -1, state_dim))
             a.append(np.array([t[1] for t in traj]).reshape(1, -1, act_dim))
             r.append(np.array([t[2] for t in traj]).reshape(1, -1, 1))
             rtg.append(np.array([traj[-1][2]] * (len(traj))).reshape(1, -1, 1))
-            # rtg.append(np.array([traj[-1][2]] * (len(traj)-1) + [0]).reshape(1, -1, 1))
             d.append(np.array([t[3] for t in traj]).reshape(1, -1))
 
             if timestep_noise:
@@ -82,10 +110,7 @@ def run():
 
             # padding and state + reward normalization
             tlen = s[-1].shape[1]
-            # print(s[-1])
-            # print(f"tlen: {tlen}, max_len: {max_len}")
             s[-1] = np.concatenate([np.zeros((1, max_len - tlen, state_dim)), s[-1]], axis=1)
-            # s[-1] = (s[-1] - state_mean) / state_std
             # a[-1] = np.concatenate([np.ones((1, max_len - tlen, act_dim)) * -10., a[-1]], axis=1)
             a[-1] = np.concatenate([np.zeros((1, max_len - tlen, act_dim)), a[-1]], axis=1)
             r[-1] = np.concatenate([np.zeros((1, max_len - tlen, 1)), r[-1]], axis=1)
@@ -137,7 +162,7 @@ def run():
         model = model.to(device=device)
         model.save(file_name='dt_trained.pth')
 
-        optimizer = torch.optim.AdamW(model.parameters(), lr=3e-5, weight_decay=0*1e-4)  # weight_decay=1e-4
+        optimizer = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=1e-2)  # weight_decay=1e-4
         trainer = Trainer(
             model=model,
             optimizer=optimizer,
@@ -149,7 +174,7 @@ def run():
         # Train
         if FINETUNE:
             max_iters = 10
-            num_of_steps = 500
+            num_of_steps = 128
         else:
             arm_new = RoboticArm()
             max_iters = 100
@@ -174,7 +199,9 @@ def run():
                 model.save(file_name='dt_trained.pth')
 
                 # Evaluate
-                score_eval, hit_rate = eval_model(arm=arm_new, model=model, print_info=False, plot=False)
+                score_eval, hit_rate = eval_model(arm=arm_new, model=model,
+                                                  # state_mean=state_mean, state_std=state_std,
+                                                  print_info=False, plot=False)
 
                 hit_rate_list.append(hit_rate)
                 evaluation_list.append(score_eval)
@@ -184,13 +211,13 @@ def run():
 
                 if best_hit_rate is None or hit_rate > best_hit_rate:
                     best_hit_rate = hit_rate
+                    # best_score_eval = score_eval
+                    # model.save(file_name='dt_trained_best.pth')
+
+                # elif hit_rate == best_hit_rate:
+                if best_score_eval is None or score_eval < best_score_eval:
                     best_score_eval = score_eval
                     model.save(file_name='dt_trained_best.pth')
-
-                elif hit_rate == best_hit_rate:
-                    if score_eval < best_score_eval:
-                        best_score_eval = score_eval
-                        model.save(file_name='dt_trained_best.pth')
 
             loss_list.append(train_loss)
 
