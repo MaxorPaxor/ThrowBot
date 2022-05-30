@@ -49,7 +49,7 @@ class RoboticArm:
                                     'joint_5_b', 'joint_6_t', 'finger_joint'])
             self.max_speed = np.array([455, 385, 520, 550, 550, 1000, 1])  # deg/s
 
-        self.max_speed_factor = 0.9  # % of
+        self.max_speed_factor = 1.0  # % of
         # max speed for safety reasons
         self.gripper_thresh = 0.82  # Gripper open threshold
 

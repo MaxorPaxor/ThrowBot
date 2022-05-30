@@ -140,6 +140,7 @@ if __name__ == "__main__":
         # checkpoint = torch.load("../weights/dt_trained_best_pid-tuned.pth", map_location=torch.device('cpu'))
         # checkpoint = torch.load("../weights/dt_trained_best_pid-high.pth", map_location=torch.device('cpu'))
         checkpoint = torch.load("../weights/dt_trained_simulation_real_cur-best.pth", map_location=torch.device('cpu'))
+        # checkpoint = torch.load("../weights/dt_trained_simulation_real_iter-0_.pth", map_location=torch.device('cpu'))
         model.load_state_dict(checkpoint['state_dict'])
 
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

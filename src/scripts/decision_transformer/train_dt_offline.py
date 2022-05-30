@@ -26,7 +26,7 @@ def run():
 
     # load dataset
     if FINETUNE:
-        session_name = 'memory_real_traj-76_Hz-10_herK-8'
+        session_name = 'memory_real_traj-88_Hz-10_herK-8_pid-high'
         trajectories = pickle.load(open(f'./data/{session_name}.pkl', 'rb'))
     else:
         session_name = 'memory_random_attempts-1000_Hz-10_herK-8_noise-False'
@@ -156,7 +156,8 @@ def run():
             attn_pdrop=dropout,
         )
         if FINETUNE:
-            checkpoint = torch.load("./weights/dt_trained_best_pid-high.pth", map_location=torch.device('cpu'))
+            # checkpoint = torch.load("./weights/dt_trained_best_pid-high.pth", map_location=torch.device('cpu'))
+            checkpoint = torch.load("./weights/dt_trained_simulation_real_cur-best.pth", map_location=torch.device('cpu'))
             model.load_state_dict(checkpoint['state_dict'])
 
         model = model.to(device=device)
@@ -170,7 +171,7 @@ def run():
             get_batch=get_batch,
             device=device
         )
-
+        # 5502192988
         # Train
         if FINETUNE:
             max_iters = 10

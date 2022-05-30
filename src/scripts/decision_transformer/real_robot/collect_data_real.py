@@ -38,7 +38,8 @@ def collect_real_data(arm, model):
     for x in target_list:
         for amp in amp_range:
 
-            _ = input("Press ENTER to throw.")
+            _ = input(f"Throw #{n_episodes}/{len(target_list) * len(amp_range)}\n"
+                      f"Press ENTER to throw.")
 
             target = np.array([x, 0.0, 0.0])
             arm.update_target(target)
@@ -85,6 +86,7 @@ def collect_real_data(arm, model):
                 print(action_)
 
                 if done:
+                    # reset_arm()
                     object_position_ = float(input(f'Target: {x}. Input object position '))
                     object_position = np.array([object_position_, 0, 0])
                     distance_from_target = calc_dist_from_goal(object_position, arm.target)
@@ -121,10 +123,10 @@ def collect_real_data(arm, model):
 
 def reset_arm():
     print("Restarting arm...")
-    time.sleep(1)
+    time.sleep(3)
     arm_new.step(np.array([0.0, 0.0, 0.0, 1.0]))
     arm_new.reset_arm()
-    time.sleep(2)
+    time.sleep(3)
     print("Done.")
 
 
