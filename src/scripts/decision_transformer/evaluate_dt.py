@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import time
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from collections import deque
 
@@ -9,7 +10,7 @@ from env.robot_env_dt import RoboticArm
 from agent.model_dt.model_dt import DecisionTransformer
 
 
-def eval_model(arm, model, state_mean=None, state_std=None, print_info=True, plot=False, target=None):
+def eval_model(arm, model, state_mean=None, state_std=None, print_info=True, target=None):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.eval()
 
@@ -29,9 +30,9 @@ def eval_model(arm, model, state_mean=None, state_std=None, print_info=True, plo
     episode_length = 0
 
     if target is None:
-        target_list = np.arange(0.5, 2.5, 0.1)
+        target_list = np.arange(0.5, 2.5, 0.2)
     else:
-        target_list = np.array([target, target, target])
+        target_list = np.array(target)
 
     for x in target_list:
 
@@ -72,7 +73,7 @@ def eval_model(arm, model, state_mean=None, state_std=None, print_info=True, plo
             action = action.detach().cpu().numpy()
             # print(action)
 
-            # print(f"dt state to action: {t2 - t1}")
+            # print(f"dt: {t2 - t1}")
             reward, done, termination_reason, obj_pos, success = arm.step(action)  # perform action and get new state
             rewards[-1] = reward
             target_return = torch.cat([target_return, target_return[0, -1].reshape(1, 1)], dim=1)
@@ -138,18 +139,8 @@ def eval_model(arm, model, state_mean=None, state_std=None, print_info=True, plo
         target_return = torch.tensor(ep_return, device=device, dtype=torch.float32).reshape(1, 1)
         timesteps = torch.tensor(0, device=device, dtype=torch.long).reshape(1, 1)
 
-        if plot:
-            fig = plt.figure()
-            ax = fig.add_subplot(1, 1, 1)
-            plt.title('Evaluation')
-            plt.xlabel('Target')
-            plt.ylabel('Average distance from target')
-
-            ax.scatter(target_list[:-1], distance_from_target_list)
-            plt.show()
-
     print(' Done.')
-    return average_distance, hit_rate
+    return average_distance, hit_rate, distance_from_target_list
 
 
 def calc_dist_from_goal(obj_pos, target):
@@ -161,6 +152,10 @@ def calc_dist_from_goal(obj_pos, target):
                        (obj_pos[1] - target[1]) ** 2)
 
     return distance
+
+
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 
 if __name__ == "__main__":
@@ -187,11 +182,22 @@ if __name__ == "__main__":
         attn_pdrop=0.0,
     )
 
-    # checkpoint = torch.load("./weights/dt_trained_best_pid-high.pth", map_location=torch.device('cpu'))
-    checkpoint = torch.load("./weights/dt_trained_best_pid-tuned.pth", map_location=torch.device('cpu'))
+    checkpoint = torch.load("./weights/dt_trained_best_pid-high.pth", map_location=torch.device('cpu'))
+    # checkpoint = torch.load("./weights/dt_trained_best_2.pth", map_location=torch.device('cpu'))
     model.load_state_dict(checkpoint['state_dict'])
+
+    num_params = count_parameters(model)
+    print(f"Number of params: {num_params}")
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device=device)
 
-    eval_model(arm=arm_new, model=model, plot=False)
+    errors = []
+    target_list = np.arange(0.5, 2.05, 0.05)
+    for _ in range(10):
+        _, _, error = eval_model(arm=arm_new, model=model, target=target_list)
+        errors.append(error)
+
+    results_cols = target_list
+    df = pd.DataFrame(errors, columns=results_cols)
+    df.to_csv(f'results/evaluation_results/eval.csv', index=False)

@@ -19,23 +19,23 @@
       - finger_joint
 
 # Fine-tuned PIDS
-  gains:
-    joint_1_s: { p: 133, d: 110, i: 369, i_clamp: 1000}
-    joint_2_l: { p: 698, d: 87, i: 379, i_clamp: 1000}
-    joint_3_u: { p: 227, d: 77, i: 472, i_clamp: 1000}
-    joint_4_r: { p: 30, d: 7, i: 4, i_clamp: 1000}
-    joint_5_b: { p: 50, d: 7, i: 75, i_clamp: 1000}
-    joint_6_t: { p: 10, d: 1, i: 10, i_clamp: 10}
-    finger_joint: { p: 40, d: 0.1, i: 0.0, i_clamp: 10}
+#  gains:
+#    joint_1_s: { p: 133, d: 110, i: 369, i_clamp: 1000}
+#    joint_2_l: { p: 698, d: 87, i: 379, i_clamp: 1000}
+#    joint_3_u: { p: 227, d: 77, i: 472, i_clamp: 1000}
+#    joint_4_r: { p: 30, d: 7, i: 4, i_clamp: 1000}
+#    joint_5_b: { p: 50, d: 7, i: 75, i_clamp: 1000}
+#    joint_6_t: { p: 10, d: 1, i: 10, i_clamp: 10}
+#    finger_joint: { p: 40, d: 0.1, i: 0.0, i_clamp: 10}
 
 #  Works good with 10Hz simulation
-#  gains:
-#    joint_1_s: { p: 8000, d: 1000, i: 100, i_clamp: 1000}
-#    joint_2_l: { p: 8000, d: 1000, i: 100, i_clamp: 1000}
-#    joint_3_u: { p: 5000, d: 500, i: 70, i_clamp: 100}
-#    joint_4_r: { p: 300, d: 75, i: 4, i_clamp: 10}
-#    joint_5_b: { p: 300, d: 10, i: 4, i_clamp: 10}
-#    joint_6_t: { p: 20, d: 1.0, i: 0, i_clamp: 1}
-#    finger_joint: { p: 40, d: 0.1, i: 0.0, i_clamp: 1}
+  gains:
+    joint_1_s: { p: 8000, d: 1000, i: 100, i_clamp: 1000}
+    joint_2_l: { p: 8000, d: 1000, i: 100, i_clamp: 1000}
+    joint_3_u: { p: 5000, d: 500, i: 70, i_clamp: 100}
+    joint_4_r: { p: 300, d: 75, i: 4, i_clamp: 10}
+    joint_5_b: { p: 300, d: 10, i: 4, i_clamp: 10}
+    joint_6_t: { p: 20, d: 1.0, i: 0, i_clamp: 1}
+    finger_joint: { p: 40, d: 0.1, i: 0.0, i_clamp: 1}
 
 

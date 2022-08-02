@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import pickle
 import pandas as pd
+import glob
 
 from collections import deque
 
@@ -10,27 +11,30 @@ from agent.trainer import Trainer
 from evaluate_dt import eval_model
 from env.robot_env_dt import RoboticArm
 
-FINETUNE = True
+FINETUNE = False
 
 
-def run():
+def run(data, embed_dim=1024, n_layer=1):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print(device)
 
-    max_ep_len = 64
     state_dim = 5  # 5
     act_dim = 4
-    batch_size = 256
+    batch_size = 128
     K = 20
 
     timestep_noise = True
 
     # load dataset
-    if FINETUNE:
-        session_name = 'memory_real_traj-88_Hz-10_herK-8_pid-high'
-        trajectories = pickle.load(open(f'./data/{session_name}.pkl', 'rb'))
-    else:
-        session_name = 'memory_random_attempts-1000_Hz-10_herK-8_noise-False'
-        trajectories = pickle.load(open(f'./data/{session_name}.pkl', 'rb'))
+    # if FINETUNE:
+    #     session_name = 'memory_real_traj-88_Hz-10_herK-8_pid-high'
+    #     trajectories = pickle.load(open(f'./data/{session_name}.pkl', 'rb'))
+    # else:
+    #     session_name = 'memory_random_attempts-1000_Hz-10_herK-8_noise-False'
+    #     trajectories = pickle.load(open(f'./data/{session_name}.pkl', 'rb'))
+
+    print(data)
+    trajectories = pickle.load(open(f'{data}', 'rb'))
 
     # (state, action, reward, done)
     fails = 0
@@ -72,10 +76,11 @@ def run():
 
     state_mean = np.array([s0_mean, s1_mean, s2_mean, s3_mean, 0])
     state_std = np.array([s0_std, s1_std, s2_std, s3_std, 1])
+    oc_ratio = closed_gripper_count / (open_gripper_count + closed_gripper_count)
 
     print(f"Open gripper count: {open_gripper_count}, Closed gripper count: {closed_gripper_count}, "
-          f"O/C Ratio: {closed_gripper_count / (open_gripper_count + closed_gripper_count)}")
-    print(f"Total real throws: {(fails + successes)/4} ,Successes: {successes}, Fails: {fails}")
+          f"O/C Ratio: {oc_ratio}")
+    print(f"Total throws: {(fails + successes)} ,Successes: {successes}, Fails: {fails}")
     print(f"State mean: {state_mean}, State STD: {state_std}")
 
     def get_batch(batch_size=256, max_len=K):
@@ -129,12 +134,13 @@ def run():
 
         return s, a, r, d, rtg, ts, mask
 
-    embed_dim = 1024  # 128
-    n_layer = 1  # 3
+    embed_dim = embed_dim  # 1024
+    n_layer = n_layer  # 3
     n_head = 1  # 1
     activation_function = 'relu'
     dropout = 0.1  # 0.1
     n_positions = 1024  # 1024
+    max_ep_len = 64
 
     number_experiments = 1
     for experiment in range(number_experiments):
@@ -163,23 +169,32 @@ def run():
         model = model.to(device=device)
         model.save(file_name='dt_trained.pth')
 
-        optimizer = torch.optim.AdamW(model.parameters(), lr=1e-5, weight_decay=1e-2)  # weight_decay=1e-4
+        optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4, weight_decay=1e-4)  # lr=1e-5, weight_decay=1e-2
+
+        warmup_steps = 5000
+        scheduler = torch.optim.lr_scheduler.LambdaLR(
+            optimizer,
+            lambda steps: min((steps + 1) / warmup_steps, 1)
+        )
+
         trainer = Trainer(
             model=model,
             optimizer=optimizer,
             batch_size=batch_size,
             get_batch=get_batch,
-            device=device
+            device=device,
+            scheduler=scheduler
         )
-        # 5502192988
+
         # Train
         if FINETUNE:
             max_iters = 10
             num_of_steps = 128
         else:
             arm_new = RoboticArm()
-            max_iters = 100
-            num_of_steps = 64
+            arm_new.gripper_thresh = oc_ratio
+            max_iters = 80  # 100, 20
+            num_of_steps = 100  # 64, 2000
 
         # First evaluation
         evaluation_list = []
@@ -191,6 +206,8 @@ def run():
         best_hit_rate = hit_rate
 
         print('=' * 40)
+        print('Warming up...')
+        train_loss = trainer.train_iteration(num_steps=num_of_steps * 20)
         for iter in range(max_iters):
             train_loss = trainer.train_iteration(num_steps=num_of_steps)
 
@@ -200,9 +217,9 @@ def run():
                 model.save(file_name='dt_trained.pth')
 
                 # Evaluate
-                score_eval, hit_rate = eval_model(arm=arm_new, model=model,
-                                                  # state_mean=state_mean, state_std=state_std,
-                                                  print_info=False, plot=False)
+                score_eval, hit_rate, _ = eval_model(arm=arm_new, model=model,
+                                                     # state_mean=state_mean, state_std=state_std,
+                                                     print_info=False)
 
                 hit_rate_list.append(hit_rate)
                 evaluation_list.append(score_eval)
@@ -243,8 +260,17 @@ def run():
         if FINETUNE:
             df.to_csv(f'results/finetune_results_iters-{max_iters}.csv', index=False)
         else:
+            session_name = data.split('.')[-2].split('/')[-1]
             df.to_csv(f'results/{session_name}_experiment-{experiment}_results.csv', index=False)
 
 
 if __name__ == '__main__':
-    run()
+    path = './data/attempts_and_k_exp/'
+    exp_list = glob.glob(path + 'mem*')
+    for exp in exp_list:
+        # run(data=exp)  # 0.37 - 0.1
+        run(data=exp, embed_dim=128, n_layer=1)  # 0.39 - 0.08
+        # run(data=exp, embed_dim=128, n_layer=3)  # 0.61 - 0.31
+        # run(data=exp, embed_dim=256, n_layer=1)  # 0.43 - 0.17
+        # run(data=exp, embed_dim=256, n_layer=3)  # 0.49 - 0.16
+        # run(data=exp, embed_dim=512, n_layer=1)  # 0.37 - 0.17

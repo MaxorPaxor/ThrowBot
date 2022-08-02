@@ -13,8 +13,8 @@ import time
 class RoboticArm:
     def __init__(self):
         # Global params
-        self.UPDATE_RATE = 10  # HZ
-        self.total_time = 1.0  # sec
+        self.UPDATE_RATE = 10  # HZ (10)
+        self.total_time = 1.0  # sec (1.0)
         self.number_steps = int(self.total_time * self.UPDATE_RATE)
         self.no_rotation = True
         self.smooth_factor = 0.0  # 10Hz, 0.5sec, 0.5sf
@@ -55,7 +55,7 @@ class RoboticArm:
             self.max_speed = np.array([455, 385, 520, 550, 550, 1000, 1])  # deg/s
 
         self.max_speed_factor = 1.0  # % of max speed for safety reasons
-        self.gripper_thresh = 0.82  # Gripper open threshold
+        self.gripper_thresh = 0.8385  # Gripper open threshold (0.82)
 
         # Init connections
         # Publish

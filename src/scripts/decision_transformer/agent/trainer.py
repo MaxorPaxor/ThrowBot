@@ -6,12 +6,13 @@ from torch.nn import CrossEntropyLoss, MSELoss, BCELoss
 
 class Trainer:
 
-    def __init__(self, model, optimizer, batch_size, get_batch, device):
+    def __init__(self, model, optimizer, batch_size, get_batch, device, scheduler):
         self.model = model
         self.optimizer = optimizer
         self.batch_size = batch_size
         self.get_batch = get_batch
         self.device = device
+        self.scheduler = scheduler
 
         self.start_time = time.time()
         self.step_number = 0
@@ -22,32 +23,20 @@ class Trainer:
         # loss_gripper = 0
 
         ### Smart Loss
-        loss_states = MSELoss()(
+        loss_motors = MSELoss()(
             a_pred[:, :-1],
             a_real[:, :-1])
 
         # Convert labels from range [-1, 1] to [0, 1]
         z = torch.zeros(a_real[:, -1].shape).to(self.device)
         a_real_act = torch.where(a_real[:, -1] == -1., z, a_real[:, -1])
-
-        # Convert activated tanh [-1, 1] to sigmoid [0, 1]
-        # sigmoid = torch.nn.Sigmoid()
-        # a_pred_new = sigmoid(torch.a.tanh(a_pred[:, -1]))
         a_pred_new = a_pred[:, -1]
 
         loss_gripper = BCELoss()(
             a_pred_new,
             a_real_act)
 
-        # if self.step_number % 50 == 0:
-        #     print(f"\n")
-            # print(f"Step number {self.step_number}")
-            # print(f"Action loss: {loss_states}, \nPredicted action: {a_pred[:, :-1]}, \nReal action: {a_real[:, :-1]}")
-            # print(f"Gripper loss: {loss_gripper}, \nPredicted gripper: {a_pred_new}, \nReal gripper: {a_real_act}")
-            # print(f"---" * 10)
-
-            # 0.27 0.27
-        return loss_gripper + loss_states
+        return 0.5*loss_gripper + loss_motors
 
     def train_iteration(self, num_steps, back_prop=True):
         train_losses = []
@@ -55,6 +44,7 @@ class Trainer:
         for i in range(num_steps):
             train_loss = self.train_step(back_prop=back_prop)
             train_losses.append(train_loss)
+            self.scheduler.step()
             print("\r \rTraining... step number {0}/{1}".format(str(i+1), str(num_steps)), end='')
 
         print(" Done.")
@@ -67,6 +57,10 @@ class Trainer:
         state_preds, action_preds, reward_preds = self.model.forward(
             states, actions, rewards, rtg, timesteps, attention_mask=attention_mask,
         )
+
+        # if self.step_number % 64 == 0:
+        #     print(f"Target actions: {actions[0]}")
+        #     print(f"Predicted actions: {action_preds[0]}")
 
         act_dim = action_preds.shape[2]
         action_preds = action_preds.reshape(-1, act_dim)[attention_mask.reshape(-1) > 0]
