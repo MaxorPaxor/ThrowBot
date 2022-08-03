@@ -48,7 +48,6 @@ def collect_data(n_attempts, k_her=0):
     max_dis = 0
     n_success = 0
 
-    # while True:
     for attempt in range(number_of_attempts):
 
         done = False
@@ -129,18 +128,18 @@ def collect_data(n_attempts, k_her=0):
                 print(info)
 
                 if attempt == 99 or attempt == 499 or attempt == 999:
-                    pickle.dump(agent.memory_raw, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
-                                                       f"her-raw.pkl", 'wb'))
-                    pickle.dump(agent.memory_k0, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
-                                                      f"herK-0.pkl", 'wb'))
-                    pickle.dump(agent.memory_k1, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
-                                                      f"herK-1.pkl", 'wb'))
-                    pickle.dump(agent.memory_k3, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
-                                                      f"herK-3.pkl", 'wb'))
-                    pickle.dump(agent.memory_k5, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
-                                                      f"herK-5.pkl", 'wb'))
+                    # pickle.dump(agent.memory_raw, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
+                    #                                    f"her-raw.pkl", 'wb'))
+                    # pickle.dump(agent.memory_k0, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
+                    #                                   f"herK-0.pkl", 'wb'))
+                    # pickle.dump(agent.memory_k1, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
+                    #                                   f"herK-1.pkl", 'wb'))
+                    # pickle.dump(agent.memory_k3, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
+                    #                                   f"herK-3.pkl", 'wb'))
                     # pickle.dump(agent.memory_k5, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
-                    #                                   f"herK-5_4.pkl", 'wb'))
+                    #                                   f"herK-5.pkl", 'wb'))
+                    pickle.dump(agent.memory_k0, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
+                                                      f"herK-0_rho-0.01.pkl", 'wb'))
 
                 agent.update_exploration()
                 agent.episode_length = 0

@@ -189,7 +189,7 @@ def run(data, embed_dim=1024, n_layer=1):
         # Train
         if FINETUNE:
             max_iters = 10
-            num_of_steps = 128
+            num_of_steps = 100
         else:
             arm_new = RoboticArm()
             arm_new.gripper_thresh = oc_ratio
@@ -206,7 +206,6 @@ def run(data, embed_dim=1024, n_layer=1):
         best_hit_rate = hit_rate
 
         print('=' * 40)
-        print('Warming up...')
         train_loss = trainer.train_iteration(num_steps=num_of_steps * 20)
         for iter in range(max_iters):
             train_loss = trainer.train_iteration(num_steps=num_of_steps)

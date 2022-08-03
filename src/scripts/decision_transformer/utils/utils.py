@@ -164,23 +164,7 @@ def plot_results(result_dt_file, result_ddpg_file):
 
 def plot_attempts_and_k():
     # Load files
-    path = '../results/attempts_and_k_exp/'
-    # mem_#attempts_#k
-    # mem_100_0 = pd.read_csv(path + 'memory_random_attempts-100_herK-0_experiment-0_results.csv')
-    # mem_100_2 = pd.read_csv(path + 'memory_random_attempts-100_herK-2_experiment-0_results.csv')
-    # mem_100_4 = pd.read_csv(path + 'memory_random_attempts-100_herK-4_experiment-0_results.csv')
-    # mem_100_6 = pd.read_csv(path + 'memory_random_attempts-100_herK-6_experiment-0_results.csv')
-    # mem_100_8 = pd.read_csv(path + 'memory_random_attempts-100_herK-8_experiment-0_results.csv')
-    # mem_500_0 = pd.read_csv(path + 'memory_random_attempts-500_herK-0_experiment-0_results.csv')
-    # mem_500_2 = pd.read_csv(path + 'memory_random_attempts-500_herK-2_experiment-0_results.csv')
-    # mem_500_4 = pd.read_csv(path + 'memory_random_attempts-500_herK-4_experiment-0_results.csv')
-    # mem_500_6 = pd.read_csv(path + 'memory_random_attempts-500_herK-6_experiment-0_results.csv')
-    # mem_500_8 = pd.read_csv(path + 'memory_random_attempts-500_herK-8_experiment-0_results.csv')
-    # mem_1000_0 = pd.read_csv(path + 'memory_random_attempts-1000_herK-0_experiment-0_results.csv')
-    # mem_1000_2 = pd.read_csv(path + 'memory_random_attempts-1000_herK-2_experiment-0_results.csv')
-    # mem_1000_4 = pd.read_csv(path + 'memory_random_attempts-1000_herK-4_experiment-0_results.csv')
-    # mem_1000_6 = pd.read_csv(path + 'memory_random_attempts-1000_herK-6_experiment-0_results.csv')
-    # mem_1000_8 = pd.read_csv(path + 'memory_random_attempts-1000_herK-8_experiment-0_results.csv')
+    path = '../results/attempts_and_k_exp/new_shared_batch/'
 
     mem_100_raw = pd.read_csv(path + 'memory_random_attempts-100_her-raw_experiment-0_results.csv')
     mem_100_0 = pd.read_csv(path + 'memory_random_attempts-100_herK-0_experiment-0_results.csv')
@@ -236,22 +220,6 @@ def plot_attempts_and_k():
 
     # Plot data
     if data_type == 'min':
-        # plt.scatter(100, mem_100_0['avg_distance_eval'].min(), c='tab:blue', label='K = 0')
-        # plt.scatter(500, mem_500_0['avg_distance_eval'].min(), c='tab:blue')
-        # plt.scatter(1000, mem_1000_0['avg_distance_eval'].min(), c='tab:blue')
-        # plt.scatter(100, mem_100_2['avg_distance_eval'].min(), c='tab:red', marker="^", label='K = 2')
-        # plt.scatter(500, mem_500_2['avg_distance_eval'].min(), c='tab:red', marker="^")
-        # plt.scatter(1000, mem_1000_2['avg_distance_eval'].min(), c='tab:red', marker="^")
-        # plt.scatter(100, mem_100_4['avg_distance_eval'].min(), c='tab:green', marker="s", label='K = 4')
-        # plt.scatter(500, mem_500_4['avg_distance_eval'].min(), c='tab:green', marker="s")
-        # plt.scatter(1000, mem_1000_4['avg_distance_eval'].min(), c='tab:green', marker="s")
-        # plt.scatter(100, mem_100_6['avg_distance_eval'].min(), c='tab:orange', marker="D", label='K = 6')
-        # plt.scatter(500, mem_500_6['avg_distance_eval'].min(), c='tab:orange', marker="D")
-        # plt.scatter(1000, mem_1000_6['avg_distance_eval'].min(), c='tab:orange', marker="D")
-        # plt.scatter(100, mem_100_8['avg_distance_eval'].min(), c='tab:purple', marker="*", label='K = 8')
-        # plt.scatter(500, mem_500_8['avg_distance_eval'].min(), c='tab:purple', marker="*")
-        # plt.scatter(1000, mem_1000_8['avg_distance_eval'].min(), c='tab:purple', marker="*")
-
         dx = 10
         plt.scatter(100, mem_100_raw['avg_distance_eval'].min(), c='tab:purple', marker="x", label='Raw data')
         plt.scatter(500, mem_500_raw['avg_distance_eval'].min(), c='tab:purple', marker="x")
@@ -262,30 +230,14 @@ def plot_attempts_and_k():
         plt.scatter(100+1.5*dx, mem_100_1['avg_distance_eval'].min(), c='tab:red', marker="^", label='K = 1')
         plt.scatter(500+1.5*dx, mem_500_1['avg_distance_eval'].min(), c='tab:red', marker="^")
         plt.scatter(1000+1.5*dx, mem_1000_1['avg_distance_eval'].min(), c='tab:red', marker="^")
-        plt.scatter(100-0.5*dx, mem_100_3['avg_distance_eval'].min(), c='tab:green', marker="s", label='K = 4')
+        plt.scatter(100-0.5*dx, mem_100_3['avg_distance_eval'].min(), c='tab:green', marker="s", label='K = 3')
         plt.scatter(500-0.5*dx, mem_500_3['avg_distance_eval'].min(), c='tab:green', marker="s")
         plt.scatter(1000-0.5*dx, mem_1000_3['avg_distance_eval'].min(), c='tab:green', marker="s")
-        plt.scatter(100-1.5*dx, mem_100_5['avg_distance_eval'].min(), c='tab:orange', marker="D", label='K = 6')
+        plt.scatter(100-1.5*dx, mem_100_5['avg_distance_eval'].min(), c='tab:orange', marker="D", label='K = 5')
         plt.scatter(500-1.5*dx, mem_500_5['avg_distance_eval'].min(), c='tab:orange', marker="D")
         plt.scatter(1000-1.5*dx, mem_1000_5['avg_distance_eval'].min(), c='tab:orange', marker="D")
 
     if data_type == 'mean':
-        # plt.scatter(100, mem_100_0['avg_distance_eval'].mean(), c='tab:blue', label='K = 0')
-        # plt.scatter(500, mem_500_0['avg_distance_eval'].mean(), c='tab:blue')
-        # plt.scatter(1000, mem_1000_0['avg_distance_eval'].mean(), c='tab:blue')
-        # plt.scatter(100, mem_100_2['avg_distance_eval'].mean(), c='tab:red', marker="^", label='K = 2')
-        # plt.scatter(500, mem_500_2['avg_distance_eval'].mean(), c='tab:red', marker="^")
-        # plt.scatter(1000, mem_1000_2['avg_distance_eval'].mean(), c='tab:red', marker="^")
-        # plt.scatter(100, mem_100_4['avg_distance_eval'].mean(), c='tab:green', marker="s", label='K = 4')
-        # plt.scatter(500, mem_500_4['avg_distance_eval'].mean(), c='tab:green', marker="s")
-        # plt.scatter(1000, mem_1000_4['avg_distance_eval'].mean(), c='tab:green', marker="s")
-        # plt.scatter(100, mem_100_6['avg_distance_eval'].mean(), c='tab:orange', marker="D", label='K = 6')
-        # plt.scatter(500, mem_500_6['avg_distance_eval'].mean(), c='tab:orange', marker="D")
-        # plt.scatter(1000, mem_1000_6['avg_distance_eval'].mean(), c='tab:orange', marker="D")
-        # plt.scatter(100, mem_100_8['avg_distance_eval'].mean(), c='tab:purple', marker="*", label='K = 8')
-        # plt.scatter(500, mem_500_8['avg_distance_eval'].mean(), c='tab:purple', marker="*")
-        # plt.scatter(1000, mem_1000_8['avg_distance_eval'].mean(), c='tab:purple', marker="*")
-
         plt.scatter(100, mem_100_raw['avg_distance_eval'].mean(), c='tab:purple', label='Raw data')
         plt.scatter(500, mem_500_raw['avg_distance_eval'].mean(), c='tab:purple')
         plt.scatter(1000, mem_1000_raw['avg_distance_eval'].mean(), c='tab:purple')
@@ -302,8 +254,9 @@ def plot_attempts_and_k():
         plt.scatter(500, mem_500_5['avg_distance_eval'].mean(), c='tab:orange', marker="D")
         plt.scatter(1000, mem_1000_5['avg_distance_eval'].mean(), c='tab:orange', marker="D")
 
-    data_fig.legend(title="Number of HER Augmentations K")
-    plt.savefig('../results/results_attempts_and_k.png')
+    # data_fig.legend(title="Number of HER Augmentations K")
+    data_fig.legend()
+    plt.savefig('../results/attempts_and_k_exp/results_attempts_and_k.png')
 
 
 def plot_evaluation():
@@ -328,6 +281,11 @@ def plot_evaluation():
     # plt.title('Evaluation of throws - Simulation')
     plt.xlabel('Target [m]')
     plt.ylabel('Distance from target [m]')
+
+    # And a corresponding grid
+    error_fig.grid(which='both')
+    error_fig.grid(which='minor', alpha=0.2)
+    error_fig.grid(which='major', alpha=0.2)
 
     # Plot data
     y_dt = []
@@ -376,10 +334,13 @@ def plot_evaluation():
     drel_dt = np.array([rel_err_std, rel_err_std])
 
     x = eval_results.columns.to_numpy().astype(float)
-    error_fig.errorbar(x, y_dt, yerr=dy_dt, fmt='tab:red', linewidth=2, elinewidth=1.5, capsize=4,
+    error_fig.errorbar(x, y_dt, yerr=dy_dt, fmt='tab:blue', linewidth=2, elinewidth=1.5, capsize=4,
                        capthick=1.5, label='Absolute Error')
-    error_fig.errorbar(x, rel_dt, yerr=drel_dt, fmt='tab:blue', linewidth=2, elinewidth=1.5, capsize=4,
-                       capthick=1.5, label='Relative Error')
+    # error_fig.errorbar(x, rel_dt, yerr=drel_dt, fmt='tab:orange', linewidth=2, elinewidth=1.5, capsize=4,
+    #                    capthick=1.5, label='Relative Error')
+    error_fig.plot(x, rel_dt, color='tab:orange', linewidth=2, label='Relative Error')
+
+    error_fig.axhline(y=dy_dt.mean(), color='black', linestyle='dotted', linewidth=2, label='Mean Absolute Error')
 
     error_fig.legend()
     plt.savefig('../results/evaluation_results/eval_sim.png')

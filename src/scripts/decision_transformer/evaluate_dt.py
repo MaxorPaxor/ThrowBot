@@ -14,6 +14,9 @@ def eval_model(arm, model, state_mean=None, state_std=None, print_info=True, tar
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.eval()
 
+    num_params = count_parameters(model)
+    print(f"Number of params: {num_params}")
+
     reward_list = []
     distance_from_target_list = []
     hit_list = []
@@ -185,9 +188,6 @@ if __name__ == "__main__":
     checkpoint = torch.load("./weights/dt_trained_best_pid-high.pth", map_location=torch.device('cpu'))
     # checkpoint = torch.load("./weights/dt_trained_best_2.pth", map_location=torch.device('cpu'))
     model.load_state_dict(checkpoint['state_dict'])
-
-    num_params = count_parameters(model)
-    print(f"Number of params: {num_params}")
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device=device)
