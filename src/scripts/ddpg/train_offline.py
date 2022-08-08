@@ -4,7 +4,7 @@ from datetime import timedelta
 import pandas as pd
 
 from agent import Agent
-from robot_env import RoboticArm
+from robot_env_ddpg import RoboticArm
 from eval_model import eval_model
 
 

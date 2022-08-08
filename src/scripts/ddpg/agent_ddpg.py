@@ -18,8 +18,8 @@ class Agent:
 
         # HER
         self.her = arm.her
-        self.k = 0
-        self.generate_targets_factor_radius = 2.0
+        self.k = 4
+        self.generate_targets_factor_radius = 1.0
 
         # Dynamics
         self.max_length = int(arm.number_steps)
@@ -40,19 +40,19 @@ class Agent:
         self.noise_strong = OUActionNoise(mu=np.zeros(self.n_actions), sigma=0.6, dt=2e-1, theta=0)  # dt=4e-2
         self.noise_soft = OUActionNoise(mu=np.zeros(self.n_actions), sigma=0.4, dt=2e-2, theta=0.1)
         self.exploration_flag = True
-        self.epsilon_arm = 30  # 50
+        self.epsilon_arm = 0  # 50
         self.soft_exploration_rate = 50
         self.epsilon_arm_decay = 1e-05
         self.exploration_open_gripper = 0
         self.update_exploration()
 
         # Learning Params
-        self.LR_actor = 3e-04
-        self.LR_critic = 3e-04  # 1e-04
+        self.LR_actor = 1e-04
+        self.LR_critic = 1e-04  # 1e-04
         self.gamma = 0.95  # discount rate
         self.BATCH_SIZE = 128
-        self.num_mini_batches_per_training = 10  # 40
-        self.train_every_n_episode = 16  # 16
+        self.num_mini_batches_per_training = 100  # 40
+        self.train_every_n_episode = 40  # 16
         self.n_episodes = 0
         self.episode_length = 0
         self.num_epoch = 0
@@ -61,12 +61,11 @@ class Agent:
         self.best_mean_distance = 10
 
         # Online Evaluation
-        self.evaluate_every_n_epoch = 10
+        self.evaluate_every_n_epoch = 1
         self.last_evaluated_epoch = 0
         self.best_evaluation_distance = None
 
         # Models
-
         # Actor
         self.actor = Actor(self.n_states, 64, self.n_actions, num_hidden_layers=2, bn=False, lr_actor=self.LR_actor)
         # self.actor = ActorRes(self.n_states, 128, self.n_actions, bn=False)
@@ -90,10 +89,8 @@ class Agent:
 
         if self.epsilon_arm > 3:
             self.epsilon_arm = self.epsilon_arm * (1 - self.epsilon_arm_decay)
-            # self.soft_exploration_rate = self.soft_exploration_rate * (1 - self.epsilon_arm_decay)
         else:
             self.epsilon_arm = 3
-            # self.soft_exploration_rate = 20
 
             # Decide if next episode will have exploration
         if random.randint(0, 100) <= self.epsilon_arm:
@@ -154,10 +151,7 @@ class Agent:
 
         self.actor.eval()
 
-        if self.her:
-            # state = np.concatenate((state, self.arm.target[0]))
-            state = np.append(state, self.arm.target[0])
-
+        state = np.append(state, self.arm.target[0])
         state_tensor = torch.tensor(state, dtype=torch.float).to(self.device)
         state_tensor = torch.unsqueeze(state_tensor, 0)
 
@@ -179,7 +173,7 @@ class Agent:
             mu_prime = action + noise_soft
             mu_prime[-1] = action[-1]
 
-            if random.randint(0, 100) <= self.soft_exploration_rate:
+            if random.randint(0, 100) < self.soft_exploration_rate:
 
                 if mu_prime[-1] < 0:
                     mu_prime[-1] = 1.0
@@ -257,7 +251,7 @@ class Agent:
             target_list = [obj_final_pos]
 
         else:
-            target_list = [obj_final_pos]
+            target_list = [self.arm.target, obj_final_pos]
             # Create another k-1 targets
             for _ in range(self.k - 1):
                 rand = np.random.rand() * 2 - 1  # Random [-1, 1]

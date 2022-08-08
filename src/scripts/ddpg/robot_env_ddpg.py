@@ -28,7 +28,7 @@ class RoboticArm:
 
         # HER attributes
         self.her = True
-        self.target_radius = 0.05  # meters
+        self.target_radius = 0.2  # 0.2 meters
 
         self.target = np.array([2, 0, 0])
         # Note: Target will be static unless agent class will override it when using HER
@@ -48,7 +48,7 @@ class RoboticArm:
             self.max_speed = np.array([455, 385, 520, 550, 550, 1000, 1])  # deg/s
 
         self.max_speed_factor = 1.0  # % of max speed for safety reasons
-        self.gripper_thresh = 0.8385  # Gripper open threshold (0.82)
+        self.gripper_thresh = 0.0  # Gripper open threshold (0.82)
 
         # Init connections
         # Publish

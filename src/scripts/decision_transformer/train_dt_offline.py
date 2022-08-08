@@ -7,6 +7,7 @@ import glob
 from collections import deque
 
 from agent.model_dt.model_dt import DecisionTransformer
+from agent.model_dt.model_mlp_bc import MLPBCModel
 from agent.trainer import Trainer
 from evaluate_dt import eval_model
 from env.robot_env_dt import RoboticArm
@@ -14,8 +15,9 @@ from env.robot_env_dt import RoboticArm
 FINETUNE = False
 
 
-def run(data, embed_dim=1024, n_layer=1):
+def run(data, embed_dim=1024, n_layer=1, bc=False):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # device = "cpu"
     print(device)
 
     state_dim = 5  # 5
@@ -24,14 +26,6 @@ def run(data, embed_dim=1024, n_layer=1):
     K = 20
 
     timestep_noise = True
-
-    # load dataset
-    # if FINETUNE:
-    #     session_name = 'memory_real_traj-88_Hz-10_herK-8_pid-high'
-    #     trajectories = pickle.load(open(f'./data/{session_name}.pkl', 'rb'))
-    # else:
-    #     session_name = 'memory_random_attempts-1000_Hz-10_herK-8_noise-False'
-    #     trajectories = pickle.load(open(f'./data/{session_name}.pkl', 'rb'))
 
     print(data)
     trajectories = pickle.load(open(f'{data}', 'rb'))
@@ -45,7 +39,11 @@ def run(data, embed_dim=1024, n_layer=1):
     s1 = []
     s2 = []
     s3 = []
+    target_list = []
+
     for trajectory in trajectories:
+        target = trajectory[0][0][-1]
+        target_list.append(target)
         for transition in trajectory:
 
             # Count successes/ fails
@@ -64,6 +62,9 @@ def run(data, embed_dim=1024, n_layer=1):
             s1.append(transition[0][:4][1])
             s2.append(transition[0][:4][2])
             s3.append(transition[0][:4][3])
+
+    df = pd.DataFrame(target_list)
+    df.to_csv("results/target_list_500.csv")
 
     s0_mean = np.array(s0).mean()
     s0_std = np.array(s0).std()
@@ -147,20 +148,31 @@ def run(data, embed_dim=1024, n_layer=1):
         results_cols = ['avg_distance_eval', 'hit_rate', 'loss']
         df = pd.DataFrame(columns=results_cols)
 
-        model = DecisionTransformer(
-            state_dim=state_dim,
-            act_dim=act_dim,
-            max_length=K,
-            max_ep_len=max_ep_len,
-            hidden_size=embed_dim,
-            n_layer=n_layer,
-            n_head=n_head,
-            n_inner=4 * embed_dim,
-            activation_function=activation_function,
-            n_positions=n_positions,
-            resid_pdrop=dropout,
-            attn_pdrop=dropout,
-        )
+        if bc:
+            model = MLPBCModel(
+                state_dim=state_dim,
+                act_dim=act_dim,
+                max_length=K,
+                hidden_size=embed_dim,
+                n_layer=3,
+            )
+
+        else:
+            model = DecisionTransformer(
+                state_dim=state_dim,
+                act_dim=act_dim,
+                max_length=K,
+                max_ep_len=max_ep_len,
+                hidden_size=embed_dim,
+                n_layer=n_layer,
+                n_head=n_head,
+                n_inner=4 * embed_dim,
+                activation_function=activation_function,
+                n_positions=n_positions,
+                resid_pdrop=dropout,
+                attn_pdrop=dropout,
+            )
+
         if FINETUNE:
             # checkpoint = torch.load("./weights/dt_trained_best_pid-high.pth", map_location=torch.device('cpu'))
             checkpoint = torch.load("./weights/dt_trained_simulation_real_cur-best.pth", map_location=torch.device('cpu'))
@@ -169,7 +181,7 @@ def run(data, embed_dim=1024, n_layer=1):
         model = model.to(device=device)
         model.save(file_name='dt_trained.pth')
 
-        optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4, weight_decay=1e-4)  # lr=1e-5, weight_decay=1e-2
+        optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
 
         warmup_steps = 5000
         scheduler = torch.optim.lr_scheduler.LambdaLR(
@@ -206,9 +218,9 @@ def run(data, embed_dim=1024, n_layer=1):
         best_hit_rate = hit_rate
 
         print('=' * 40)
-        train_loss = trainer.train_iteration(num_steps=num_of_steps * 20)
+        train_loss = trainer.train_iteration(num_steps=num_of_steps * 20, bc=bc)
         for iter in range(max_iters):
-            train_loss = trainer.train_iteration(num_steps=num_of_steps)
+            train_loss = trainer.train_iteration(num_steps=num_of_steps, bc=bc)
 
             if FINETUNE:
                 model.save(file_name=f'dt_trained_simulation_real_iter-{iter}_.pth')
@@ -218,7 +230,8 @@ def run(data, embed_dim=1024, n_layer=1):
                 # Evaluate
                 score_eval, hit_rate, _ = eval_model(arm=arm_new, model=model,
                                                      # state_mean=state_mean, state_std=state_std,
-                                                     print_info=False)
+                                                     print_info=False,
+                                                     bc=bc)
 
                 hit_rate_list.append(hit_rate)
                 evaluation_list.append(score_eval)
@@ -260,7 +273,7 @@ def run(data, embed_dim=1024, n_layer=1):
             df.to_csv(f'results/finetune_results_iters-{max_iters}.csv', index=False)
         else:
             session_name = data.split('.')[-2].split('/')[-1]
-            df.to_csv(f'results/{session_name}_experiment-{experiment}_results.csv', index=False)
+            df.to_csv(f'results/{session_name}_bc-{bc}_results.csv', index=False)
 
 
 if __name__ == '__main__':
@@ -268,7 +281,7 @@ if __name__ == '__main__':
     exp_list = glob.glob(path + 'mem*')
     for exp in exp_list:
         # run(data=exp)  # 0.37 - 0.1
-        run(data=exp, embed_dim=128, n_layer=1)  # 0.39 - 0.08
+        run(data=exp, embed_dim=128, n_layer=1, bc=True)  # 0.39 - 0.08
         # run(data=exp, embed_dim=128, n_layer=3)  # 0.61 - 0.31
         # run(data=exp, embed_dim=256, n_layer=1)  # 0.43 - 0.17
         # run(data=exp, embed_dim=256, n_layer=3)  # 0.49 - 0.16

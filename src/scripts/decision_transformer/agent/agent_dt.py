@@ -17,8 +17,8 @@ class Agent:
 
         # HER
         self.her = arm.her
-        self.k = 8  # 4
-        self.generate_targets_factor_radius = 2.0  # 1.0
+        self.k = 0
+        self.generate_targets_factor_radius = 2.0
 
         # Dynamics
         self.max_length = int(arm.number_steps)
@@ -54,8 +54,8 @@ class Agent:
         # Learning Params
         self.LR = 1e-04
         self.BATCH_SIZE = 128
-        self.num_mini_batches_per_training = 10  # 40
-        self.train_every_n_episode = 16  # 16
+        self.num_mini_batches_per_training = 100  # 40
+        self.train_every_n_episode = 100  # 16
         self.n_episodes = 0
         self.episode_length = 0
         self.num_epoch = 0
@@ -92,14 +92,6 @@ class Agent:
         )
         self.model = self.model.to(device=self.device)
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.LR)  # weight_decay=1e-4
-
-        # self.trainer = Trainer(
-        #     model=self.model,
-        #     optimizer=self.optimizer,
-        #     batch_size=self.BATCH_SIZE,
-        #     get_batch=self.get_batch,
-        #     device=self.device
-        # )
 
         if load_nn:
             self.model.load()
@@ -153,76 +145,7 @@ class Agent:
         self.memory_k1.clear()
         self.memory_k3.clear()
         self.memory_k5.clear()
-
-    # def save(self, eval_distance):
-    #     """
-    #     Save weights and memory every n epochs
-    #     """
-    #
-    #     if self.num_epoch % 10 == 0:
-    #         self.model.save(file_name='model.pth')
-    #         pickle.dump(self.memory, open('data/memory.pkl', 'wb'))
-    #
-    #     if self.best_evaluation_distance is None:
-    #         self.best_evaluation_distance = eval_distance
-    #     elif eval_distance < self.best_evaluation_distance:
-    #         self.best_evaluation_distance = eval_distance
-    #         self.model.save(file_name='model_best.pth')
-    #         pickle.dump(self.memory, open('./data/memory_best.pkl', 'wb'))
-
-    # def get_batch(self):
-    #
-    #     batch_inds = np.random.choice(
-    #         np.arange(len(self.memory)),
-    #         size=self.BATCH_SIZE,
-    #         replace=True
-    #     )
-    #
-    #     s, a, r, d, rtg, ts, mask = [], [], [], [], [], [], []
-    #
-    #     for i in range(self.BATCH_SIZE):
-    #         traj = self.memory[batch_inds[i]]
-    #         # (state, action, reward, done)
-    #
-    #         # get sequences from dataset
-    #         s.append(np.array([t[0] for t in traj]).reshape(1, -1, self.n_states))
-    #         a.append(np.array([t[1] for t in traj]).reshape(1, -1, self.n_actions))
-    #         r.append(np.array([t[2] for t in traj]).reshape(1, -1, 1))
-    #         # rtg.append(np.array([traj[-1][2]] * (len(traj))).reshape(1, -1, 1))
-    #         rtg.append(np.array([traj[-1][2]] * (len(traj)-1) + [0]).reshape(1, -1, 1))
-    #         d.append(np.array([t[3] for t in traj]).reshape(1, -1))
-    #         ts.append(np.array([t for t in range(len(traj))]).reshape(1, -1))
-    #
-    #         # padding and state + reward normalization
-    #         tlen = s[-1].shape[1]
-    #         s[-1] = np.concatenate([np.zeros((1, self.max_length - tlen, self.n_states)), s[-1]], axis=1)
-    #         # s[-1] = (s[-1] - state_mean) / state_std
-    #         # a[-1] = np.concatenate([np.ones((1, max_len - tlen, act_dim)) * -10., a[-1]], axis=1)
-    #         a[-1] = np.concatenate([np.zeros((1, self.max_length - tlen, self.n_actions)), a[-1]], axis=1)
-    #         r[-1] = np.concatenate([np.zeros((1, self.max_length - tlen, 1)), r[-1]], axis=1)
-    #         d[-1] = np.concatenate([np.ones((1, self.max_length - tlen)) * 2, d[-1]], axis=1)
-    #         rtg[-1] = np.concatenate([np.zeros((1, self.max_length - tlen, 1)), rtg[-1]], axis=1)  # / scale
-    #         ts[-1] = np.concatenate([np.zeros((1, self.max_length - tlen)), ts[-1]], axis=1)
-    #         mask.append(np.concatenate([np.zeros((1, self.max_length - tlen)), np.ones((1, tlen))], axis=1))
-    #
-    #     s = torch.from_numpy(np.concatenate(s, axis=0)).to(dtype=torch.float32, device=self.device)
-    #     a = torch.from_numpy(np.concatenate(a, axis=0)).to(dtype=torch.float32, device=self.device)
-    #     r = torch.from_numpy(np.concatenate(r, axis=0)).to(dtype=torch.float32, device=self.device)
-    #     d = torch.from_numpy(np.concatenate(d, axis=0)).to(dtype=torch.long, device=self.device)
-    #     rtg = torch.from_numpy(np.concatenate(rtg, axis=0)).to(dtype=torch.float32, device=self.device)
-    #     ts = torch.from_numpy(np.concatenate(ts, axis=0)).to(dtype=torch.long, device=self.device)
-    #     mask = torch.from_numpy(np.concatenate(mask, axis=0)).to(device=self.device)
-    #
-    #     return s, a, r, d, rtg, ts, mask
-
-    # def train_dt(self):
-    #     """
-    #     Call for a DDPG train step
-    #     """
-    #
-    #     if self.transitions > self.BATCH_SIZE and self.n_episodes % self.train_every_n_episode == 0:
-    #         self.trainer.train_iteration(num_steps=self.num_mini_batches_per_training)
-    #         self.num_epoch += 1
+        self.memory_k11.clear()
 
     def get_action(self, states, actions, rewards, target_return, timesteps):
         """

@@ -5,7 +5,7 @@ from datetime import timedelta
 from collections import deque
 
 from agent import Agent
-from robot_env import RoboticArm
+from robot_env_ddpg import RoboticArm
 
 
 # LOAD_NN = True

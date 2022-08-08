@@ -8,11 +8,21 @@ from collections import deque
 
 from env.robot_env_dt import RoboticArm
 from agent.model_dt.model_dt import DecisionTransformer
+from agent.agent_dt import Agent
 
 
-def eval_model(arm, model, state_mean=None, state_std=None, print_info=True, target=None):
+def eval_model(arm, model, state_mean=None, state_std=None, print_info=True, target=None, bc=False):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.eval()
+
+    ### DELETE
+    # Agent
+    agent = Agent(arm=arm)
+    agent.epsilon_arm = 100  # 50
+    agent.soft_exploration_rate = 0
+    agent.epsilon_arm_decay = 0
+    agent.k = 0
+    ###
 
     num_params = count_parameters(model)
     print(f"Number of params: {num_params}")
@@ -43,10 +53,7 @@ def eval_model(arm, model, state_mean=None, state_std=None, print_info=True, tar
         arm.update_target(target)
 
         done = False
-
-        action_0 = None  # TODO: Check static actions
         while not done:
-
             state = arm.get_state()  # get state
             state = np.append(state, arm.target[0])  # append target
             if state_mean is not None and state_std is not None:
@@ -66,17 +73,16 @@ def eval_model(arm, model, state_mean=None, state_std=None, print_info=True, tar
                 timesteps.to(dtype=torch.long),
             )  # get action
             t2 = time.time()
-            # time.sleep(0.03)
-
-            # if action_0 is None:
-            #     action_0 = action
-            # action = action_0
+            # print(f"dt: {t2 - t1}")
 
             actions[-1] = action
             action = action.detach().cpu().numpy()
-            # print(action)
 
-            # print(f"dt: {t2 - t1}")
+            ### Delete
+            action = agent.get_action_random()  # get action
+            action = action.detach().cpu().numpy()
+            ###
+
             reward, done, termination_reason, obj_pos, success = arm.step(action)  # perform action and get new state
             rewards[-1] = reward
             target_return = torch.cat([target_return, target_return[0, -1].reshape(1, 1)], dim=1)
@@ -85,17 +91,6 @@ def eval_model(arm, model, state_mean=None, state_std=None, print_info=True, tar
             episode_length += 1
 
         # DONE
-        # print("states:")
-        # print(states.to(dtype=torch.float32))
-        # print("actions:")
-        # print(actions.to(dtype=torch.float32))
-        # print("target_return:")
-        # print(target_return.to(dtype=torch.float32))
-        # print("timesteps:")
-        # print(timesteps.to(dtype=torch.long))
-        # t2 = time.time()
-        # print(f"dt: {t2 - t1}")
-
         arm.reset()
         n_episodes += 1
 
@@ -126,8 +121,7 @@ def eval_model(arm, model, state_mean=None, state_std=None, print_info=True, tar
                   f' {"    Final Object X Position:":40} {round(obj_pos[0], 4)}\n'
                   f' {"    Distance From Target:":40} {round(distance_from_goal, 4)}\n'
                   f' {"    Average Distance From Target:":40} {average_distance}\n'
-                  f' {"    Variance Distance:":40} {std_distance}\n'
-                  f' {"    Hit Rate:":40} {hit_rate}\n')
+                  f' {"    Variance Distance:":40} {std_distance}\n')
             print('=======================================================')
 
         else:
@@ -141,6 +135,11 @@ def eval_model(arm, model, state_mean=None, state_std=None, print_info=True, tar
         ep_return = 1.
         target_return = torch.tensor(ep_return, device=device, dtype=torch.float32).reshape(1, 1)
         timesteps = torch.tensor(0, device=device, dtype=torch.long).reshape(1, 1)
+
+        agent.update_exploration()
+        agent.episode_length = 0
+        agent.noise_soft.reset()
+        agent.noise_strong.reset()
 
     print(' Done.')
     return average_distance, hit_rate, distance_from_target_list
@@ -163,7 +162,6 @@ def count_parameters(model):
 
 if __name__ == "__main__":
     arm_new = RoboticArm()
-    arm_new.number_states = 1  # 1 state for decision transformer
     arm_new.state_mem = deque(maxlen=arm_new.number_states)
     arm_new.noise_actions = False
     arm_new.random_delay = 0
@@ -194,10 +192,10 @@ if __name__ == "__main__":
 
     errors = []
     target_list = np.arange(0.5, 2.05, 0.05)
-    for _ in range(10):
+    for _ in range(30):
         _, _, error = eval_model(arm=arm_new, model=model, target=target_list)
         errors.append(error)
 
     results_cols = target_list
     df = pd.DataFrame(errors, columns=results_cols)
-    df.to_csv(f'results/evaluation_results/eval.csv', index=False)
+    df.to_csv(f'results/evaluation_results/eval_random.csv', index=False)

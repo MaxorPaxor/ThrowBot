@@ -74,94 +74,6 @@ class Plot:
         plt.show()
 
 
-def plot_results(result_dt_file, result_ddpg_file):
-    # Load files
-    df_dt = pd.read_csv(result_dt_file)
-    df_ddpg = pd.read_csv(result_ddpg_file)
-
-    # Analyse DT Data
-    x_dt = range(df_dt.shape[0])
-    dy_dt = []
-    y_dt = []
-    y_max_dt = []
-    y_min_dt = []
-    y_err_top_dt = []
-    y_err_bot_dt = []
-    for index, row in df_dt.iterrows():
-        max_dt = row.max()
-        min_dt = row.min()
-        mean_dt = row.mean()
-        # err = row.std()
-        y_err_top_dt.append(mean_dt - max_dt)
-        y_err_bot_dt.append(min_dt - mean_dt)
-
-        # dy.append(err)
-        y_dt.append(mean_dt)
-        y_max_dt.append(max_dt)
-        y_min_dt.append(min_dt)
-
-    dy_dt = np.array([y_err_top_dt, y_err_bot_dt])
-
-    # Analyse DDPG Data
-    x_ddpg = range(df_ddpg.shape[0])
-    dy_ddpg = []
-    y_ddpg = []
-    y_max_ddpg = []
-    y_min_ddpg = []
-    y_err_top_ddpg = []
-    y_err_bot_ddpg = []
-    for index, row in df_ddpg.iterrows():
-        max_ddpg = row.max()
-        min_ddpg = row.min()
-        mean_ddpg = row.mean()
-        # err = row.std()
-        y_err_top_ddpg.append(mean_ddpg - max_ddpg)
-        y_err_bot_ddpg.append(min_ddpg - mean_ddpg)
-
-        # dy.append(err)
-        y_ddpg.append(mean_ddpg)
-        y_max_ddpg.append(max_ddpg)
-        y_min_ddpg.append(min_ddpg)
-
-    dy_ddpg = np.array([y_err_top_ddpg, y_err_bot_ddpg])
-
-    # Create fig
-    fig = plt.figure()
-    fig.set_figheight(6)
-    fig.set_figwidth(12)
-    ax_dt = fig.add_subplot(1, 1, 1)
-
-    # Major and minor ticks
-    major_ticks_x = np.arange(0, 101, 10)
-    minor_ticks_x = np.arange(0, 101, 5)
-    major_ticks_y = np.arange(0, 101, 1)
-    minor_ticks_y = np.arange(0, 101, 0.2)
-    ax_dt.set_xticks(major_ticks_x)
-    ax_dt.set_xticks(minor_ticks_x, minor=True)
-    ax_dt.set_yticks(major_ticks_y)
-    ax_dt.set_yticks(minor_ticks_y, minor=True)
-
-    # And a corresponding grid
-    ax_dt.grid(which='both')
-    ax_dt.grid(which='minor', alpha=0.2)
-    ax_dt.grid(which='major', alpha=0.5)
-
-    # Titles
-    plt.title('DT Offline Training - 10k Random Samples')
-    plt.xlabel('Number of Epochs')
-    plt.ylabel('Average distance from target')
-
-    # plt.plot(x, y)
-    # plt.plot(x, y_max)
-    # plt.plot(x, y_min)
-    ax_dt.errorbar(x_dt, y_dt, yerr=dy_dt, fmt='tab:blue', elinewidth=1, capsize=3, capthick=1, label='DT')
-    ax_dt.errorbar(x_ddpg, y_ddpg, yerr=dy_ddpg, fmt='tab:red', elinewidth=1, capsize=3, capthick=1, label='DDPG')
-    ax_dt.legend()
-    # plt.savefig('results/results_ddpg.png')
-    # plt.savefig('results/results_dt.png')
-    plt.savefig('results/results_combined.png')
-
-
 def plot_attempts_and_k():
     # Load files
     path = '../results/attempts_and_k_exp/new_shared_batch/'
@@ -198,11 +110,11 @@ def plot_attempts_and_k():
     # Major and minor ticks
     major_ticks_x = np.array([100, 500, 1000])
     # minor_ticks_x = np.arange(0, 101, 5)
-    # major_ticks_y = np.arange(0, 101, 1)
+    major_ticks_y = np.arange(0.1, 1.4, 0.2)
     # minor_ticks_y = np.arange(0, 101, 0.2)
     data_fig.set_xticks(major_ticks_x)
     # ax_dt.set_xticks(minor_ticks_x, minor=True)
-    # ax_dt.set_yticks(major_ticks_y)
+    data_fig.set_yticks(major_ticks_y)
     # ax_dt.set_yticks(minor_ticks_y, minor=True)
 
     # And a corresponding grid
@@ -221,21 +133,21 @@ def plot_attempts_and_k():
     # Plot data
     if data_type == 'min':
         dx = 10
-        plt.scatter(100, mem_100_raw['avg_distance_eval'].min(), c='tab:purple', marker="x", label='Raw data')
-        plt.scatter(500, mem_500_raw['avg_distance_eval'].min(), c='tab:purple', marker="x")
-        plt.scatter(1000, mem_1000_raw['avg_distance_eval'].min(), c='tab:purple', marker="x")
-        plt.scatter(100+0.5*dx, mem_100_0['avg_distance_eval'].min(), c='tab:blue', label='K = 0')
-        plt.scatter(500+0.5*dx, mem_500_0['avg_distance_eval'].min(), c='tab:blue')
-        plt.scatter(1000+0.5*dx, mem_1000_0['avg_distance_eval'].min(), c='tab:blue')
-        plt.scatter(100+1.5*dx, mem_100_1['avg_distance_eval'].min(), c='tab:red', marker="^", label='K = 1')
-        plt.scatter(500+1.5*dx, mem_500_1['avg_distance_eval'].min(), c='tab:red', marker="^")
-        plt.scatter(1000+1.5*dx, mem_1000_1['avg_distance_eval'].min(), c='tab:red', marker="^")
-        plt.scatter(100-0.5*dx, mem_100_3['avg_distance_eval'].min(), c='tab:green', marker="s", label='K = 3')
-        plt.scatter(500-0.5*dx, mem_500_3['avg_distance_eval'].min(), c='tab:green', marker="s")
-        plt.scatter(1000-0.5*dx, mem_1000_3['avg_distance_eval'].min(), c='tab:green', marker="s")
-        plt.scatter(100-1.5*dx, mem_100_5['avg_distance_eval'].min(), c='tab:orange', marker="D", label='K = 5')
-        plt.scatter(500-1.5*dx, mem_500_5['avg_distance_eval'].min(), c='tab:orange', marker="D")
-        plt.scatter(1000-1.5*dx, mem_1000_5['avg_distance_eval'].min(), c='tab:orange', marker="D")
+        plt.scatter(100, mem_100_raw['avg_distance_eval'].min(), c='tab:purple', marker="o", label='Raw Data')
+        plt.scatter(500, mem_500_raw['avg_distance_eval'].min(), c='tab:purple', marker="o")
+        plt.scatter(1000, mem_1000_raw['avg_distance_eval'].min(), c='tab:purple', marker="o")
+        plt.scatter(100+0.5*dx, mem_100_0['avg_distance_eval'].min(), c='tab:blue', marker="^", label='K = 0')
+        plt.scatter(500+0.5*dx, mem_500_0['avg_distance_eval'].min(), c='tab:blue', marker="^")
+        plt.scatter(1000+0.5*dx, mem_1000_0['avg_distance_eval'].min(), c='tab:blue', marker="^")
+        plt.scatter(100+1.5*dx, mem_100_1['avg_distance_eval'].min(), c='tab:red', marker="s", label='K = 1')
+        plt.scatter(500+1.5*dx, mem_500_1['avg_distance_eval'].min(), c='tab:red', marker="s")
+        plt.scatter(1000+1.5*dx, mem_1000_1['avg_distance_eval'].min(), c='tab:red', marker="s")
+        plt.scatter(100-0.5*dx, mem_100_3['avg_distance_eval'].min(), c='tab:green', marker="D", label='K = 3')
+        plt.scatter(500-0.5*dx, mem_500_3['avg_distance_eval'].min(), c='tab:green', marker="D")
+        plt.scatter(1000-0.5*dx, mem_1000_3['avg_distance_eval'].min(), c='tab:green', marker="D")
+        plt.scatter(100-1.5*dx, mem_100_5['avg_distance_eval'].min(), c='tab:orange', marker="*", label='K = 5')
+        plt.scatter(500-1.5*dx, mem_500_5['avg_distance_eval'].min(), c='tab:orange', marker="*")
+        plt.scatter(1000-1.5*dx, mem_1000_5['avg_distance_eval'].min(), c='tab:orange', marker="*")
 
     if data_type == 'mean':
         plt.scatter(100, mem_100_raw['avg_distance_eval'].mean(), c='tab:purple', label='Raw data')
@@ -254,15 +166,29 @@ def plot_attempts_and_k():
         plt.scatter(500, mem_500_5['avg_distance_eval'].mean(), c='tab:orange', marker="D")
         plt.scatter(1000, mem_1000_5['avg_distance_eval'].mean(), c='tab:orange', marker="D")
 
+    plt.scatter(100, 1.15, c='black', marker="x", label='Random Throws')
+    plt.scatter(500, 1.15, c='black', marker="x")
+    plt.scatter(1000, 1.15, c='black', marker="x")
+    # plt.axhline(y=1.3, color='black', linestyle='dotted', linewidth=2, label='Random Throws')
+
     # data_fig.legend(title="Number of HER Augmentations K")
-    data_fig.legend()
+    # get handles and labels
+    handles, labels = plt.gca().get_legend_handles_labels()
+
+    # specify order of items in legend
+    order = [5, 0, 1, 2, 3, 4]
+
+    # add legend to plot
+    data_fig.legend([handles[idx] for idx in order], [labels[idx] for idx in order])
+
     plt.savefig('../results/attempts_and_k_exp/results_attempts_and_k.png')
 
 
 def plot_evaluation():
     # Load files
     path = '../results/evaluation_results/'
-    eval_results = pd.read_csv(path + 'eval.csv')
+    eval_results = pd.read_csv(path + 'eval_dt.csv')
+    eval_results_random = pd.read_csv(path + 'eval_random.csv')
 
     # Create fig
     plt.rcParams.update({'font.size': 15})
@@ -282,12 +208,24 @@ def plot_evaluation():
     plt.xlabel('Target [m]')
     plt.ylabel('Distance from target [m]')
 
+    # Ticks
+    # major_ticks_x = np.array([100, 500, 1000])
+    # minor_ticks_x = np.arange(0, 101, 5)
+    major_ticks_y = np.arange(0.1, 2.2, 0.3)
+    # major_ticks_y = np.array([0, 0.1, 0.2, 0.3, 1.3, 1.4])
+    # minor_ticks_y = np.arange(0, 101, 0.2)
+    # error_fig.set_xticks(major_ticks_x)
+    # error_fig.set_xticks(minor_ticks_x, minor=True)
+    error_fig.set_yticks(major_ticks_y)
+    # error_fig.set_yticks(minor_ticks_y, minor=True)
+
     # And a corresponding grid
     error_fig.grid(which='both')
     error_fig.grid(which='minor', alpha=0.2)
     error_fig.grid(which='major', alpha=0.2)
 
-    # Plot data
+    # Process Data
+    # DT Error
     y_dt = []
     y_max_dt = []
     y_min_dt = []
@@ -310,6 +248,7 @@ def plot_evaluation():
 
     dy_dt = np.array([y_err_std, y_err_std])
 
+    # Relative Error
     rel_dt = []
     rel_max_dt = []
     rel_min_dt = []
@@ -330,20 +269,108 @@ def plot_evaluation():
         rel_max_dt.append(max_dt)
         rel_min_dt.append(min_dt)
 
-    # drel_dt = np.array([rel_err_top_dt, rel_err_bot_dt])
     drel_dt = np.array([rel_err_std, rel_err_std])
 
+    # Random Error
+    random_error = []
+    str_error = []
+    for column in eval_results_random:
+        column_values = eval_results_random[column].values
+        mean_dt = column_values.mean()
+        err = column_values.std()
+
+        random_error.append(mean_dt)
+        str_error.append(err)
+
+    rand_err_str = np.array([str_error, str_error])
+
+    # Plot Data
     x = eval_results.columns.to_numpy().astype(float)
-    error_fig.errorbar(x, y_dt, yerr=dy_dt, fmt='tab:blue', linewidth=2, elinewidth=1.5, capsize=4,
-                       capthick=1.5, label='Absolute Error')
-    # error_fig.errorbar(x, rel_dt, yerr=drel_dt, fmt='tab:orange', linewidth=2, elinewidth=1.5, capsize=4,
-    #                    capthick=1.5, label='Relative Error')
-    error_fig.plot(x, rel_dt, color='tab:orange', linewidth=2, label='Relative Error')
+    error_fig.errorbar(x, y_dt, yerr=dy_dt, fmt='tab:blue', linewidth=1.5, elinewidth=1.0, capsize=4,
+                       capthick=1.0, label='DT Error')
+    error_fig.errorbar(x, random_error, yerr=rand_err_str, fmt='black', linewidth=1, elinewidth=1.0, capsize=4,
+                       capthick=1.0, label='Random Throws Error')
+    # error_fig.plot(x, random_error, color='black', linewidth=1, label='Random Throws Error')
 
-    error_fig.axhline(y=dy_dt.mean(), color='black', linestyle='dotted', linewidth=2, label='Mean Absolute Error')
+    # Plot baselines
+    error_fig.axhline(y=np.array(y_dt).mean(), color='tab:blue', linestyle='dotted', linewidth=2, label='DT Mean Error')
+    error_fig.axhline(y=np.array(random_error).mean(), color='black', linestyle='dotted', linewidth=2, label='Random Throws Mean Error')
+    print(np.array(y_dt).mean(), np.array(random_error).mean())
 
-    error_fig.legend()
+    # Legend and save
+    # get handles and labels
+    handles, labels = plt.gca().get_legend_handles_labels()
+
+    # specify order of items in legend
+    order = [2, 0, 3, 1]
+
+    # add legend to plot
+    error_fig.legend([handles[idx] for idx in order], [labels[idx] for idx in order])
     plt.savefig('../results/evaluation_results/eval_sim.png')
+
+
+def plot_target_heatmap():
+    # Load file
+    target_list = pd.read_csv('../results/target_list_500.csv')
+    target_list = target_list.to_numpy()
+    target_list = target_list[:, 1]
+
+    # Create fig
+    plt.rcParams.update({'font.size': 15})
+    plt.rc('figure', autolayout=True)
+    plt.rc('xtick', labelsize=16)
+    plt.rc('ytick', labelsize=16)
+    plt.rc('axes', titlesize=16)
+    plt.rc('axes', labelsize=17)
+    plt.rc('legend', fontsize=13)
+    plt.rc('mathtext', fontset='stix')
+    plt.rc('font', family='STIXGeneral')
+    fig = plt.figure(figsize=(7.2, 4.45))
+    data_fig = fig.add_subplot(1, 1, 1)
+
+    # Major and minor ticks
+    # major_ticks_x = np.array([100, 500, 1000])
+    # minor_ticks_x = np.arange(0, 101, 5)
+    # major_ticks_y = np.arange(0, 100, 25)
+    # minor_ticks_y = np.arange(0, 101, 0.2)
+    # data_fig.set_xticks(major_ticks_x)
+    # ax_dt.set_xticks(minor_ticks_x, minor=True)
+    # data_fig.set_yticks(major_ticks_y)
+    # ax_dt.set_yticks(minor_ticks_y, minor=True)
+
+    # And a corresponding grid
+    data_fig.grid(which='both')
+    data_fig.grid(which='minor', alpha=0.2)
+    data_fig.grid(which='major', alpha=0.2)
+
+    # Titles
+    # plt.title('DT Offline Training - Number of Random Samples and HER Augmentations')
+    plt.xlabel('Target [m]')
+    plt.ylabel('Number of Samples')
+
+    # Plot data
+    n_bins = 40
+    # plt.imshow(target_list[np.newaxis, :], cmap="plasma", aspect="auto", extent=extent)
+    n, bins, _ = plt.hist(target_list, bins=n_bins, range=(0, 2), color='tab:green', rwidth=0.5)
+    print(n)
+    print(bins)
+    print(n[10:-1].sum())
+    print(n[20:-1].sum())
+    print(n[30:-1].sum())
+    # plt.plot(target_list)
+
+    # data_fig.legend(title="Number of HER Augmentations K")
+    # get handles and labels
+    # handles, labels = plt.gca().get_legend_handles_labels()
+
+    # specify order of items in legend
+    # order = [5, 0, 1, 2, 3, 4]
+
+    # add legend to plot
+    # data_fig.legend([handles[idx] for idx in order], [labels[idx] for idx in order])
+    # data_fig.legend()
+
+    plt.savefig('../results/sample_hist.png')
 
 
 @contextmanager
@@ -370,5 +397,6 @@ def stdout_redirected(to=os.devnull):
 if __name__ == '__main__':
     # plot_results(result_dt_file='results/experiment_dt_offline_10k.csv',
     #              result_ddpg_file='results/experiment_ddpg_offline_10k.csv')
-    plot_attempts_and_k()
+    # plot_attempts_and_k()
     # plot_evaluation()
+    plot_target_heatmap()

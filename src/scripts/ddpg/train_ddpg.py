@@ -2,16 +2,16 @@ import numpy as np
 import time
 from datetime import timedelta
 
-from agent import Agent
-from robot_env import RoboticArm
-from utils import Plot
+from agent_ddpg import Agent
+from robot_env_ddpg import RoboticArm
+from utils_ddpg import Plot
 from eval_model import eval_model
 
 
 # LOAD_NN = True
-LOAD_MEMORY = True
+# LOAD_MEMORY = True
 LOAD_NN = False
-# LOAD_MEMORY = False
+LOAD_MEMORY = False
 
 
 def train():
@@ -28,6 +28,8 @@ def train():
     # Evaluation
     mean_distance_evaluated_list = []
     mean_distance_eval = None
+    best_evaluation_distance = None
+    best_eval_episode = None
     evaluated_epochs_list = []
 
     arm = RoboticArm()
@@ -46,13 +48,12 @@ def train():
     while True:
         state = arm.get_n_state()  # get state
         action = agent.get_action(state)  # get action
+        print(action)
         reward, done, termination_reason, obj_pos, success = arm.step(action)  # perform action and get new state
         state_new = arm.get_n_state()  # get new state
 
-        if agent.her:
+        if obj_pos[0] < 3:
             temp_mem.append((state, action, reward, state_new, done, success))
-        else:
-            agent.remember(state, action, reward, state_new, done)
 
         agent.episode_length += 1
 
@@ -62,8 +63,7 @@ def train():
             agent.noise_strong.reset()
             agent.n_episodes += 1
 
-            if agent.her:
-                agent.generate_her_memory(temp_mem, obj_final_pos=obj_pos)
+            agent.generate_her_memory(temp_mem, obj_final_pos=obj_pos)
 
             if reward > agent.record:
                 agent.record = reward
@@ -85,10 +85,14 @@ def train():
 
             # Evaluation
             if agent.num_epoch % agent.evaluate_every_n_epoch == 0 and agent.num_epoch > agent.last_evaluated_epoch:
-                mean_distance_eval = eval_model(arm=arm, agent=agent, evaluation_episodes=50, print_info=False)
+                mean_distance_eval = eval_model(arm=arm, agent=agent, print_info=False)
                 mean_distance_evaluated_list.append(mean_distance_eval)
                 evaluated_epochs_list.append(agent.num_epoch)
                 agent.last_evaluated_epoch = agent.num_epoch
+
+                if best_evaluation_distance is None or mean_distance_eval < best_evaluation_distance:
+                    best_evaluation_distance = mean_distance_eval
+                    best_eval_episode = agent.n_episodes
 
             info = (f' {"GENERAL":30}\n'
                     f' {"  Termination reason:":30} {termination_reason}\n'
@@ -107,7 +111,9 @@ def train():
                     f' {"  Variance distance:":30} {round(std_distance, 4)}\n'
                     f' {"EVALUATION":30}\n'
                     f' {"  Mean evaluation distance:":30} {mean_distance_eval}\n'
-                    f' {"  Best evaluation distance:":30} {agent.best_evaluation_distance}\n'
+                    f' {"  Best evaluation distance:":30} {best_evaluation_distance}\n'
+                    f' {"  Var evaluation distance:":30} {np.array(mean_distance_evaluated_list).var()}\n'
+                    f' {"  Best evaluation episode:":30} {best_eval_episode}\n'
                     f' {"  Last evaluated epoch:":30} {agent.last_evaluated_epoch}\n'
                     f' {"EXPLORATION":30}\n'
                     f' {"  Exploration:":30} {agent.exploration_flag}\n'

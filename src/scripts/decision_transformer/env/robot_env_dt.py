@@ -19,13 +19,6 @@ class RoboticArm:
         self.no_rotation = True
         self.smooth_factor = 0.0  # 10Hz, 0.5sec, 0.5sf
 
-        # Noise
-        self.random_delay = None
-        self.random_delay_amp = 0
-        self.noise_actions = False
-        self.noise_prob = 0.5  # 0.5
-        self.noise_max = 0.5  # 0.3 0.5
-
         # Init attributes
         self.object_distance = 0
         self.curr_time = 0  # sec
@@ -35,10 +28,7 @@ class RoboticArm:
 
         # HER attributes
         self.her = True
-        self.target_radius = 0.01  # 0.05 # meters
-
-        self.target = np.array([2, 0, 0])
-        # Note: Target will be static unless agent class will override it when using HER
+        self.target_radius = 0.05  # meters
 
         # States
         self.number_states = 1
@@ -77,9 +67,6 @@ class RoboticArm:
         print("Established Connection")
         print("Restarting environment...")
         self.reset()
-        self.max_allowed_distance = np.sqrt((self.object_position[0] - self.target[0]) ** 2 +
-                                            (self.object_position[1] - self.target[1]) ** 2 +
-                                            (self.object_position[2] - self.target[2]) ** 2)
         self.initial_pos = self.object_position
 
     def reset_gazebo_object(self):
@@ -122,8 +109,6 @@ class RoboticArm:
         else:
             self.velocity = [0, 0, 0, 0, 0, 0, 0]
 
-        self.random_delay = int(np.random.rand() * self.random_delay_amp)
-
     def trajectory(self, j1=0.0, j2=0.5, j3=-0.3, j4=0.0,
                    j5=-1.5, j6=0.0, gripper=-1.0, dt=None):
         """
@@ -145,9 +130,9 @@ class RoboticArm:
         trajectory.joint_names.append("finger_joint")
 
         if gripper >= 0:
-            gripper = 0.625  # 0.19, 0.625
+            gripper = 0.625
         else:
-            gripper = 0.5  # 0.05,
+            gripper = 0.5
 
         point.positions.append(j1)  # 0.0
         point.positions.append(j2)  # 0.5
@@ -186,10 +171,10 @@ class RoboticArm:
         trajectory.joint_names.append("finger_joint")
 
         if gripper >= self.gripper_thresh:  # Gripper is closed
-            gripper = 0.625  # 0.19, 0.625
+            gripper = 0.625
 
         else:  # Gripper is open
-            gripper = 0.5  # 0.05, 0.5
+            gripper = 0.5
             # vel_1, vel_2, vel_3, vel_4, vel_5, vel_6 = 0, 0, 0, 0, 0, 0  # stop arm movement
             # dt = 0.02
 
@@ -283,10 +268,8 @@ class RoboticArm:
         """
         Returns the state of the arm to the RL algo
         """
-
-        # rospy.wait_for_message("/motoman_gp8/joint_states", JointState)
-
         angles = []
+
         for joint in self.joints:
             idx = self.joint_names.index(joint)
             angles.append(self.angles[idx])
@@ -311,30 +294,9 @@ class RoboticArm:
             for joint in self.joints:
                 idx = self.joint_names.index(joint)
                 angles.append(s[idx])
-
             state += angles
 
         return np.array(state)
-
-    def distance_to_reward_shaped(self):
-        """
-        Shaped reward function
-        """
-
-        distance = np.sqrt((self.object_position[0] - self.target[0]) ** 2 +
-                           (self.object_position[1] - self.target[1]) ** 2 +
-                           (self.object_position[2] - self.target[2]) ** 2)
-
-        reward = 1.0 - (distance / self.max_allowed_distance) ** 0.8
-
-        return reward
-
-    def reward_to_distance_shaped(self, reward):
-        """
-        Reversed shaped reward function
-        """
-
-        return self.max_allowed_distance * (1.0 - reward) ** (1.0 / 0.8)
 
     def reward_sparse(self, obj_pos=None, target=None):
         """
@@ -348,8 +310,7 @@ class RoboticArm:
             obj_pos = self.object_position
 
         distance = np.sqrt((obj_pos[0] - target[0]) ** 2 +
-                           (obj_pos[1] - target[1]) ** 2)  # +
-        # (obj_pos[2] - target[2]) ** 2)
+                           (obj_pos[1] - target[1]) ** 2)
 
         if distance <= self.target_radius and obj_pos[0] > self.initial_pos[0]:
             return 1.0
@@ -379,17 +340,6 @@ class RoboticArm:
         velocity_vector_max[-1] = velocity_vector[-1]
         return velocity_vector_max
 
-    def add_noise_to_actions(self, velocity_vector):
-
-        if np.random.rand() < self.noise_prob:
-            r = 1 - np.random.rand(velocity_vector.shape[0]) * self.noise_max
-            velocity_vector_noised = velocity_vector * r
-            velocity_vector_noised[-1] = velocity_vector[-1]
-            return velocity_vector_noised
-
-        else:
-            return velocity_vector
-
     def wait_for_object_to_touch_ground(self):
         t1 = time.time()
         while not self.object_height <= 1.2 * 0.5 * 0.015 * np.sqrt(2):  # Make sure object is on the ground
@@ -402,14 +352,8 @@ class RoboticArm:
         Performs 1 step for the robotic arm and checks if stop conditions are met
         Returns reward, done flag and termination reason
         """
-        if self.random_delay > 0:
-            self.random_delay = self.random_delay - 1
-            velocity_vector = [0, 0, 0, 1]
-
         velocity_vector = self.proj_on_max_speed(velocity_vector)  # Rescale for maximum speed
         velocity_vector = self.smooth_velocity(velocity_vector)  # Apply complimentary filter on velocity vector
-        if self.noise_actions:
-            velocity_vector = self.add_noise_to_actions(velocity_vector)  # Add random noise to actions
 
         if self.no_rotation:
             self.velocity = velocity_vector
@@ -420,9 +364,7 @@ class RoboticArm:
             vel_1, vel_2, vel_3, vel_4, vel_5, vel_6, gripper = velocity_vector
 
         trajectory = self.vel_trajectory(vel_1, vel_2, vel_3, vel_4, vel_5, vel_6, gripper)
-        # print(f"Trajectory: \n{trajectory}")
-        if self.random_delay <= 0:
-            self.pub_command.publish(trajectory)
+        self.pub_command.publish(trajectory)
 
         # self.rate.sleep()
         time.sleep(1.0 / self.UPDATE_RATE)
@@ -481,153 +423,7 @@ class RoboticArm:
 
         return reward, done, termination_reason, distance, success
 
-    def test_throw_position(self):
-        """
-        Open-loop throw functions to test the physics
-        Using position control
-        Does not depends on velocities, dynamics etc
-        """
-
-        self.reset()
-        swing = self.trajectory(j2=0.1, j3=0.5, j5=-0.2, gripper=0.1, dt=0.2)
-        self.pub_command.publish(swing)
-        time.sleep(0.1)
-        open = self.trajectory(j2=0.3, j3=0.5, j5=-0.2, gripper=-0.1, dt=0.1)
-        self.pub_command.publish(open)
-        time.sleep(2)
-
-        # Plot object behavior
-        # plot_height = self.object_height_list.copy()
-        # x_plot_height = range(len(plot_height))
-        # plot_velocity = self.object_velocity_list.copy()
-        # x_plot_velocity = range(len(plot_velocity))
-        #
-        # plt.plot(x_plot_height, plot_height)
-        # plt.plot(x_plot_velocity, plot_velocity)
-        # plt.legend(["Object Height", "Object Velocity"])
-        # plt.axhline(linewidth=1, linestyle='--', color='k')
-        # plt.show()
-
-    def test_throw_vel(self):
-        """
-        Open-loop throw functions to test the physics
-        Using velocity control
-        """
-
-        # 20 Hz
-        commands = np.array([[-1., 1., 1., 1.],
-                             [-0.99384165, 1., 1., 1.],
-                             [0.94804716, 1., 1., 1.],
-                             [0.93011117, 1., 1., 1.],
-                             [0.97881395, 1., 1., 1.],
-                             [0.7864225, 1., 1., 0.99999815],
-                             [-0.99999946, 1., 1., -0.9909104]])
-
-        self.reset()
-
-        for command in commands:
-            t1 = time.time()
-            self.step(command)
-            t2 = time.time()
-            print(f' {"State:":10} {self.get_state()}')
-            print(f' {"dt:":10} {t2 - t1}')
-
-        # Plot object behavior
-        # plot_height = self.object_height_list.copy()
-        # x_plot_height = range(len(plot_height))
-        # plot_velocity = self.object_velocity_list.copy()
-        # x_plot_velocity = range(len(plot_velocity))
-        #
-        # plt.plot(x_plot_height, plot_height)
-        # plt.plot(x_plot_velocity, plot_velocity)
-        # plt.legend(["Object Height", "Object Velocity"])
-        # plt.axhline(linewidth=1, linestyle='--', color='k')
-        # plt.show()
-
-    def test_pid(self):
-        """
-        Tests
-        """
-
-        traj_2_l_real = np.array(
-            [0.49135804, 0.49135804, 0.49135804, 0.49135804, 0.49135804, 0.49135804, 0.49135804, 0.49135804, 0.49135804,
-             0.49135804, 0.48938784, 0.39135209, 0.2164495, 0.16115429, 0.15337412, 0.15488413, 0.15545937, 0.15551689,
-             0.15545937, 0.15538748, 0.16073723, 0.22904731, 0.39841318, 0.48717314, 0.49240786, 0.49173194, 0.49137244,
-             0.49131489, 0.49131489])
-        traj_3_u_real = np.array(
-            [-0.28836921, -0.28836921, -0.28836921, -0.28836921, -0.28836921, -0.28836921, -0.28836921, -0.28836921,
-             -0.28836921, -0.28836921, -0.28463015, -0.15138473, 0.07690997, 0.15560319, 0.16923644, 0.16624518,
-             0.16532478,
-             0.16528644, 0.16530561, 0.16534396, 0.15658109, 0.06279734, -0.15874784, -0.28144714, -0.29143718,
-             -0.28904033,
-             -0.2883884, -0.28836921, -0.28836921])
-        traj_5_b_real = np.array(
-            [-1.48707461, -1.48707461, -1.48707461, -1.48707461, -1.48707461, -1.48707461, -1.48707461, -1.48707461,
-             -1.48707461, -1.48707461, -1.48458183, -1.34539711, -1.08936608, -1.01273894, -1.00667489, -1.00689065,
-             -1.00705838, -1.00710642, -1.00710642, -1.00710642, -1.01163638, -1.10453808, -1.35884333, -1.4825685,
-             -1.48757792, -1.4872663, -1.48709857, -1.48707461, -1.48705065])
-
-        # Extend last position to reduce oscillation errors
-        traj_2_l_real = np.append(traj_2_l_real, [traj_2_l_real[-1]] * 20)
-        traj_3_u_real = np.append(traj_3_u_real, [traj_3_u_real[-1]] * 20)
-        traj_5_b_real = np.append(traj_5_b_real, [traj_5_b_real[-1]] * 20)
-
-        traj_2_l, traj_3_u, traj_5_b = [], [], []
-        for i in range(1, 50):
-
-            state = robotic_arm.get_state()
-            print(state)
-            traj_2_l.append(state[0])
-            traj_3_u.append(state[1])
-            traj_5_b.append(state[2])
-
-            if i == 10:
-                print(i)
-                action = np.array([-0.5, 0.5, 0.5, 0.99])
-                reward, done, termination_reason, distance, success = robotic_arm.step(action)
-
-            elif i == 20:
-                print(i)
-                action = np.array([0.5, -0.5, -0.5, 0.99])
-                reward, done, termination_reason, distance, success = robotic_arm.step(action)
-
-            else:
-                time.sleep(1.0 / robotic_arm.UPDATE_RATE)
-
-        traj_2_l = np.array(traj_2_l)
-        traj_3_u = np.array(traj_3_u)
-        traj_5_b = np.array(traj_5_b)
-
-        error_2_l = np.sum((traj_2_l_real[:30] - traj_2_l[:30]) ** 2) + 3 * np.sum(
-            (traj_2_l_real[30:] - traj_2_l[30:]) ** 2)
-        error_3_u = np.sum((traj_3_u_real[:30] - traj_3_u[:30]) ** 2) + 3 * np.sum(
-            (traj_3_u_real[30:] - traj_3_u[30:]) ** 2)
-        error_5_b = np.sum((traj_5_b_real[:30] - traj_5_b[:30]) ** 2) + 3 * np.sum(
-            (traj_5_b_real[30:] - traj_5_b[30:]) ** 2)
-
-        total_error = error_2_l + error_3_u + error_5_b
-
-        print(f"Total Error: {total_error} \n"
-              f"error_2_l: {error_2_l}, error_3_u: {error_3_u}, error_5_b: {error_5_b} \n"
-              f"-----")
-
-    def test_throw(self):
-        """
-        Tests
-        """
-
-        traj = [[-0.4391,  0.4595,  0.6025,  0.9745],
-                [-0.1096,  0.8842,  0.5789,  0.8254],
-                [-0.9110,  0.9447,  0.2840, -0.9221]]
-
-        for point in traj:
-            self.step(point)
-            time.sleep(0.003)  # simulates network pass
-        # self.reset()
-
 
 if __name__ == '__main__':
     robotic_arm = RoboticArm()
-    robotic_arm.reset()
-    # robotic_arm.test_throw()
-    robotic_arm.test_pid()
+    # robotic_arm.reset()
