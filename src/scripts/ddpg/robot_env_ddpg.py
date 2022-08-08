@@ -13,11 +13,11 @@ import time
 class RoboticArm:
     def __init__(self):
         # Global params
-        self.UPDATE_RATE = 20  # HZ
-        self.total_time = 0.5  # sec
-        self.number_steps = self.total_time * self.UPDATE_RATE
+        self.UPDATE_RATE = 10  # HZ (10)
+        self.total_time = 1.0  # sec (1.0)
+        self.number_steps = int(self.total_time * self.UPDATE_RATE)
         self.no_rotation = True
-        self.smooth_factor = 0.5
+        self.smooth_factor = 0.0  # 10Hz, 0.5sec, 0.5sf
 
         # Init attributes
         self.object_distance = 0
@@ -28,7 +28,7 @@ class RoboticArm:
 
         # HER attributes
         self.her = True
-        self.target_radius = 0.2  # meters
+        self.target_radius = 0.05  # meters
 
         self.target = np.array([2, 0, 0])
         # Note: Target will be static unless agent class will override it when using HER
@@ -47,7 +47,8 @@ class RoboticArm:
                                     'joint_5_b', 'joint_6_t', 'finger_joint'])
             self.max_speed = np.array([455, 385, 520, 550, 550, 1000, 1])  # deg/s
 
-        self.max_speed_factor = 0.8  # % of max speed for safety reasons
+        self.max_speed_factor = 1.0  # % of max speed for safety reasons
+        self.gripper_thresh = 0.8385  # Gripper open threshold (0.82)
 
         # Init connections
         # Publish
@@ -135,9 +136,9 @@ class RoboticArm:
         trajectory.joint_names.append("finger_joint")
 
         if gripper >= 0:
-            gripper = 0.19
+            gripper = 0.625
         else:
-            gripper = 0.05
+            gripper = 0.5
 
         point.positions.append(j1)  # 0.0
         point.positions.append(j2)  # 0.5
@@ -175,30 +176,37 @@ class RoboticArm:
         trajectory.joint_names.append("joint_6_t")
         trajectory.joint_names.append("finger_joint")
 
-        if gripper >= 0:  # Gripper is closed
-            gripper = 0.19
+        if gripper >= self.gripper_thresh:  # Gripper is closed
+            gripper = 0.625
 
         else:  # Gripper is open
-            gripper = 0.05
+            gripper = 0.5
             # vel_1, vel_2, vel_3, vel_4, vel_5, vel_6 = 0, 0, 0, 0, 0, 0  # stop arm movement
             # dt = 0.02
 
         # Current_position + NN_velocity_output(-1 < V < +1) * max_speed(rd/s) * time(1/frequency)
-        point.positions.append(self.angles[1] + vel_1 * 1.0 / self.UPDATE_RATE)
-        point.positions.append(self.angles[2] + vel_2 * 1.0 / self.UPDATE_RATE)
-        point.positions.append(self.angles[3] + vel_3 * 1.0 / self.UPDATE_RATE)
-        point.positions.append(self.angles[4] + vel_4 * 1.0 / self.UPDATE_RATE)
-        point.positions.append(self.angles[5] + vel_5 * 1.0 / self.UPDATE_RATE)
-        point.positions.append(self.angles[6] + vel_6 * 1.0 / self.UPDATE_RATE)
+        pos_1 = self.angles[1] + vel_1 * 1.0 / self.UPDATE_RATE
+        pos_2 = self.angles[2] + vel_2 * 1.0 / self.UPDATE_RATE
+        pos_3 = self.angles[3] + vel_3 * 1.0 / self.UPDATE_RATE
+        pos_4 = self.angles[4] + vel_4 * 1.0 / self.UPDATE_RATE
+        pos_5 = self.angles[5] + vel_5 * 1.0 / self.UPDATE_RATE
+        pos_6 = self.angles[6] + vel_6 * 1.0 / self.UPDATE_RATE
+
+        point.positions.append(pos_1)
+        point.positions.append(pos_2)
+        point.positions.append(pos_3)
+        point.positions.append(pos_4)
+        point.positions.append(pos_5)
+        point.positions.append(pos_6)
         point.positions.append(gripper)
 
-        point.velocities.append(vel_1)
-        point.velocities.append(vel_2)
-        point.velocities.append(vel_3)
-        point.velocities.append(vel_4)
-        point.velocities.append(vel_5)
-        point.velocities.append(vel_6)
-        point.velocities.append(0)
+        # point.velocities.append(vel_1)
+        # point.velocities.append(vel_2)
+        # point.velocities.append(vel_3)
+        # point.velocities.append(vel_4)
+        # point.velocities.append(vel_5)
+        # point.velocities.append(vel_6)
+        # point.velocities.append(0)
 
         if dt is None:
             dt = 1.0 / self.UPDATE_RATE
@@ -287,10 +295,10 @@ class RoboticArm:
         Returns the last 3 states of the arm to the RL algo
         """
 
-        state = []
-
         while len(self.state_mem) != self.number_states:
             time.sleep(0.05)  # Make sure the buffer is full with n states
+
+        state = []
 
         for s in self.state_mem:
             angles = []
@@ -333,8 +341,7 @@ class RoboticArm:
             obj_pos = self.object_position
 
         distance = np.sqrt((obj_pos[0] - target[0]) ** 2 +
-                           (obj_pos[1] - target[1]) ** 2)  # +
-                           # (obj_pos[2] - target[2]) ** 2)
+                           (obj_pos[1] - target[1]) ** 2)
 
         if distance <= self.target_radius and obj_pos[0] > self.initial_pos[0]:
             return 1.0
@@ -360,13 +367,13 @@ class RoboticArm:
         Converts to rad/s from deg/s
         """
         velocity_vector_max = velocity_vector * self.max_speed * self.max_speed_factor
-        velocity_vector_max = velocity_vector_max * np.pi/180
+        velocity_vector_max = velocity_vector_max * np.pi / 180
         velocity_vector_max[-1] = velocity_vector[-1]
         return velocity_vector_max
 
     def wait_for_object_to_touch_ground(self):
         t1 = time.time()
-        while not self.object_height <= 0.05 * np.sqrt(2):  # Make sure object is on the ground
+        while not self.object_height <= 1.2 * 0.5 * 0.015 * np.sqrt(2):  # Make sure object is on the ground
             time.sleep(0.005)
             if time.time() - t1 > 3:  # timeout
                 break
@@ -382,7 +389,7 @@ class RoboticArm:
         if self.no_rotation:
             self.velocity = velocity_vector
             vel_2, vel_3, vel_5, gripper = velocity_vector
-            vel_1, vel_4, vel_6 = 0, 0, 0
+            vel_1, vel_4, vel_6 = 0.0, 0.0, 0.0
         else:
             self.velocity = velocity_vector
             vel_1, vel_2, vel_3, vel_4, vel_5, vel_6, gripper = velocity_vector
@@ -401,12 +408,14 @@ class RoboticArm:
         - Gripper was opened
         - Object touched the ground
         """
-        if self.curr_step >= self.number_steps or gripper < 0:
+        if self.curr_step >= self.number_steps or gripper < self.gripper_thresh:
             done = True
 
             # If object is released, wait for it to fall and reward the action
-            if gripper < 0:
+            if gripper < self.gripper_thresh:
                 termination_reason = "Gripper was opened with value: {}".format(gripper)
+                trajectory = self.vel_trajectory(0, 0, 0, 0, 0, 0, gripper)
+                self.pub_command.publish(trajectory)
                 self.wait_for_object_to_touch_ground()
 
                 # Successful throw reward:
@@ -429,7 +438,7 @@ class RoboticArm:
                 success = False
 
         else:  # Gripper is closed and time is not up
-            if self.object_height <= 0.05 * np.sqrt(2) * 1.1:  # if too close to ground
+            if self.object_height <= 0.5 * 0.015 * np.sqrt(2):  # if too close to ground
                 termination_reason = "Object is too close to ground: {}".format(self.object_height)
                 done = True
                 reward = -1.0
@@ -445,91 +454,7 @@ class RoboticArm:
 
         return reward, done, termination_reason, distance, success
 
-    def test_throw_position(self):
-        """
-        Open-loop throw functions to test the physics
-        Using position control
-        Does not depends on velocities, dynamics etc
-        """
-
-        self.reset()
-        swing = self.trajectory(j2=0.1, j3=0.5, j5=-0.2, gripper=0.1, dt=0.2)
-        self.pub_command.publish(swing)
-        time.sleep(0.1)
-        open = self.trajectory(j2=0.3, j3=0.5, j5=-0.2, gripper=-0.1, dt=0.1)
-        self.pub_command.publish(open)
-        time.sleep(2)
-
-        # Plot object behavior
-        # plot_height = self.object_height_list.copy()
-        # x_plot_height = range(len(plot_height))
-        # plot_velocity = self.object_velocity_list.copy()
-        # x_plot_velocity = range(len(plot_velocity))
-        #
-        # plt.plot(x_plot_height, plot_height)
-        # plt.plot(x_plot_velocity, plot_velocity)
-        # plt.legend(["Object Height", "Object Velocity"])
-        # plt.axhline(linewidth=1, linestyle='--', color='k')
-        # plt.show()
-
-    def test_throw_vel(self):
-        """
-        Open-loop throw functions to test the physics
-        Using velocity control
-        """
-
-        # 20 Hz
-        commands = np.array([[-1.,  1.,  1.,  1.],
-                             [-0.99384165,  1., 1., 1.],
-                             [0.94804716, 1., 1., 1.],
-                             [0.93011117, 1., 1., 1.],
-                             [0.97881395, 1., 1.,  1.],
-                             [0.7864225,  1., 1., 0.99999815],
-                             [-0.99999946,  1., 1., -0.9909104]])
-
-        self.reset()
-
-        for command in commands:
-            t1 = time.time()
-            self.step(command)
-            t2 = time.time()
-            print(f' {"State:":10} {self.get_state()}')
-            print(f' {"dt:":10} {t2 - t1}')
-
-        # Plot object behavior
-        # plot_height = self.object_height_list.copy()
-        # x_plot_height = range(len(plot_height))
-        # plot_velocity = self.object_velocity_list.copy()
-        # x_plot_velocity = range(len(plot_velocity))
-        #
-        # plt.plot(x_plot_height, plot_height)
-        # plt.plot(x_plot_velocity, plot_velocity)
-        # plt.legend(["Object Height", "Object Velocity"])
-        # plt.axhline(linewidth=1, linestyle='--', color='k')
-        # plt.show()
-
-    def test(self):
-        """
-        Tests
-        """
-
-        # self.reset()
-        # swing = self.trajectory(j2=0.3, j3=0.5, j5=-0.2, gripper=0.1, dt=0.05)
-        # self.pub_command.publish(swing)
-        # time.sleep(0.1)
-        # open = self.trajectory(j2=0.3, j3=0.5, j5=-0.2, gripper=-0.1, dt=0.05)
-        # self.pub_command.publish(open)
-        # time.sleep(1)
-
-        swing = self.trajectory(gripper=-0.1, dt=0.2)
-        self.pub_command.publish(swing)
-        time.sleep(2)
-        self.reset()
-
 
 if __name__ == '__main__':
     robotic_arm = RoboticArm()
     # robotic_arm.reset()
-    # robotic_arm.test_throw_position()
-    # robotic_arm.test_throw_vel()
-    robotic_arm.test()

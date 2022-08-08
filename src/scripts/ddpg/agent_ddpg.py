@@ -3,7 +3,6 @@ import random
 import numpy as np
 from collections import deque
 import pickle
-import itertools
 
 from model.model import Critic, Actor, DDPGTrainer
 from model.noise import OUActionNoise
@@ -19,10 +18,11 @@ class Agent:
 
         # HER
         self.her = arm.her
-        self.k = 4
-        self.generate_targets_factor_radius = 1.0
+        self.k = 0
+        self.generate_targets_factor_radius = 2.0
 
         # Dynamics
+        self.max_length = int(arm.number_steps)
         self.no_rotation = arm.no_rotation
         self.n_actions = len(self.arm.joints)
         self.n_states = self.n_actions * self.arm.number_states
@@ -30,18 +30,17 @@ class Agent:
             self.n_states += 1
 
         # Buffer
-        self.MAX_MEMORY = 10_000
+        self.MAX_MEMORY = 100_000
         self.memory = deque(maxlen=int(self.MAX_MEMORY))  # popleft()
         if load_mem:
             self.memory = pickle.load(open('data/memory_random_10k_3s.pkl', 'rb'))
             # self.memory = deque(itertools.islice(self.memory, 0, int(0.85*len(self.memory))))
 
         # Exploration
-        # self.noise_strong = OUActionNoise(mu=np.zeros(self.n_actions), sigma=0.8, dt=4e-2, theta=0.0)
-        self.noise_strong = OUActionNoise(mu=np.zeros(self.n_actions), sigma=1.5, dt=4e-2, theta=0.0)
+        self.noise_strong = OUActionNoise(mu=np.zeros(self.n_actions), sigma=0.6, dt=2e-1, theta=0)  # dt=4e-2
         self.noise_soft = OUActionNoise(mu=np.zeros(self.n_actions), sigma=0.4, dt=2e-2, theta=0.1)
         self.exploration_flag = True
-        self.epsilon_arm = 0  # 50
+        self.epsilon_arm = 30  # 50
         self.soft_exploration_rate = 50
         self.epsilon_arm_decay = 1e-05
         self.exploration_open_gripper = 0
@@ -52,7 +51,7 @@ class Agent:
         self.LR_critic = 3e-04  # 1e-04
         self.gamma = 0.95  # discount rate
         self.BATCH_SIZE = 128
-        self.num_mini_batches_per_training = 40  # 40
+        self.num_mini_batches_per_training = 10  # 40
         self.train_every_n_episode = 16  # 16
         self.n_episodes = 0
         self.episode_length = 0
@@ -93,11 +92,11 @@ class Agent:
             self.epsilon_arm = self.epsilon_arm * (1 - self.epsilon_arm_decay)
             # self.soft_exploration_rate = self.soft_exploration_rate * (1 - self.epsilon_arm_decay)
         else:
-            self.epsilon_arm = 0
+            self.epsilon_arm = 3
             # self.soft_exploration_rate = 20
 
             # Decide if next episode will have exploration
-        if random.randint(0, 100) < self.epsilon_arm:
+        if random.randint(0, 100) <= self.epsilon_arm:
             self.exploration_flag = True
             self.exploration_open_gripper = random.randint(0, int(self.arm.number_steps - 1))
         else:
@@ -162,8 +161,8 @@ class Agent:
         state_tensor = torch.tensor(state, dtype=torch.float).to(self.device)
         state_tensor = torch.unsqueeze(state_tensor, 0)
 
-        mu = self.actor.forward(state_tensor).to(self.device)
-        mu = torch.squeeze(mu)
+        action = self.actor.forward(state_tensor).to(self.device)
+        action = torch.squeeze(action)
 
         noise_soft = torch.tensor(self.noise_soft(), dtype=torch.float).to(self.device)
         noise_strong = torch.tensor(self.noise_strong(), dtype=torch.float).to(self.device)
@@ -171,17 +170,14 @@ class Agent:
         if self.exploration_flag:  # Strong exploration
             mu_prime = noise_strong
 
-            # if self.episode_length + 1 == arm.number_steps:
-            # if random.randint(0, 100) <= 100 * (self.episode_length/self.arm.number_steps) ** 2:
-            # print(self.episode_length, self.exploration_open_gripper)
             if self.episode_length >= self.exploration_open_gripper:
                 mu_prime[-1] = -1.0  # Open gripper
             else:
                 mu_prime[-1] = 1.0  # Keep gripper closed
 
         else:  # Soft exploration
-            mu_prime = mu + noise_soft
-            mu_prime[-1] = mu[-1]
+            mu_prime = action + noise_soft
+            mu_prime[-1] = action[-1]
 
             if random.randint(0, 100) <= self.soft_exploration_rate:
 
@@ -210,10 +206,10 @@ class Agent:
         state_tensor = torch.tensor(state, dtype=torch.float).to(self.device)
         state_tensor = torch.unsqueeze(state_tensor, 0)
 
-        mu = self.actor.forward(state_tensor).to(self.device)
-        mu = torch.squeeze(mu)
+        action = self.actor.forward(state_tensor).to(self.device)
+        action = torch.squeeze(action)
 
-        final_move = mu.cpu().detach().numpy()
+        final_move = action.cpu().detach().numpy()
         final_move = np.clip(final_move, a_min=-1, a_max=1)
         return final_move
 
@@ -252,15 +248,23 @@ class Agent:
         Adding actual (state||target, action, reward, state_new||target, done) tuple together with a modified one:
         (state||target`, action, reward`, state_new||target`, done)
         """
-        target_list = [self.arm.target, obj_final_pos]
 
         # Create target list
-        for _ in range(self.k - 1):
-            rand = np.random.rand() * 2 - 1  # Random [-1, 1]
-            x = obj_final_pos[0] + self.arm.target_radius * rand * self.generate_targets_factor_radius
-            if x > 0:
-                new_target = np.array([x, 0, 0])
-                target_list.append(new_target)
+        if self.k == -1:
+            target_list = [self.arm.target]
+
+        elif self.k == 0:
+            target_list = [obj_final_pos]
+
+        else:
+            target_list = [obj_final_pos]
+            # Create another k-1 targets
+            for _ in range(self.k - 1):
+                rand = np.random.rand() * 2 - 1  # Random [-1, 1]
+                x = obj_final_pos[0] + self.arm.target_radius * rand * self.generate_targets_factor_radius
+                if x > 0:
+                    new_target = np.array([x, 0, 0])
+                    target_list.append(new_target)
 
         # Create new memory buffer
         for trg in target_list:
@@ -306,8 +310,7 @@ class Agent:
         """
 
         distance = np.sqrt((obj_pos[0] - target[0]) ** 2 +
-                           (obj_pos[1] - target[1]) ** 2)  # +
-                           # (obj_pos[2] - target[2]) ** 2)
+                           (obj_pos[1] - target[1]) ** 2)
 
         return distance
 
