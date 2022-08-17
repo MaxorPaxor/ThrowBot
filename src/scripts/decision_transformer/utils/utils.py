@@ -211,6 +211,8 @@ def plot_evaluation():
     # Ticks
     # major_ticks_x = np.array([100, 500, 1000])
     # minor_ticks_x = np.arange(0, 101, 5)
+    n1 = np.array([0, 0.1, 0.2])
+    n2 = np.arange(0.0, 2.2, 0.3)
     major_ticks_y = np.arange(0.1, 2.2, 0.3)
     # major_ticks_y = np.array([0, 0.1, 0.2, 0.3, 1.3, 1.4])
     # minor_ticks_y = np.arange(0, 101, 0.2)
@@ -309,6 +311,111 @@ def plot_evaluation():
     plt.savefig('../results/evaluation_results/eval_sim.png')
 
 
+def plot_evaluation_real():
+    # Load files
+    path = '../results/evaluation_results/'
+    eval_results_sim = pd.read_csv(path + 'eval_dt.csv')
+    eval_results_real = pd.read_csv(path + 'evaluation_real/eval_real.csv')
+
+    # Create fig
+    plt.rcParams.update({'font.size': 15})
+    plt.rc('figure', autolayout=True)
+    plt.rc('xtick', labelsize=16)
+    plt.rc('ytick', labelsize=16)
+    plt.rc('axes', titlesize=16)
+    plt.rc('axes', labelsize=17)
+    plt.rc('legend', fontsize=13)
+    plt.rc('mathtext', fontset='stix')
+    plt.rc('font', family='STIXGeneral')
+    fig = plt.figure(figsize=(7.2, 4.45))
+    error_fig = fig.add_subplot(1, 1, 1)
+
+    # Titles
+    # plt.title('Evaluation of throws - Simulation')
+    plt.xlabel('Target [m]')
+    plt.ylabel('Distance from target [m]')
+
+    # Ticks
+    # n1 = np.array([0, 0.1, 0.2])
+    # n2 = np.arange(0.0, 2.2, 0.3)
+
+    # major_ticks_x = np.array([100, 500, 1000])
+    # minor_ticks_x = np.arange(0, 101, 5)
+    # major_ticks_y = np.arange(0.1, 2.2, 0.3)
+    # major_ticks_y = np.array([0, 0.1, 0.2, 0.3, 1.3, 1.4])
+    # minor_ticks_y = np.arange(0, 101, 0.2)
+
+    # error_fig.set_xticks(major_ticks_x)
+    # error_fig.set_xticks(minor_ticks_x, minor=True)
+    # error_fig.set_yticks(major_ticks_y)
+    # error_fig.set_yticks(minor_ticks_y, minor=True)
+
+    # And a corresponding grid
+    error_fig.grid(which='both')
+    error_fig.grid(which='minor', alpha=0.2)
+    error_fig.grid(which='major', alpha=0.2)
+
+    # Process Data
+    # DT Sim Error
+    y_dt = []
+    y_max_dt = []
+    y_min_dt = []
+    y_err_top_dt = []
+    y_err_bot_dt = []
+    y_err_std = []
+    for column in eval_results_sim:
+        column_values = eval_results_sim[column].values
+        max_dt = column_values.max()
+        min_dt = column_values.min()
+        mean_dt = column_values.mean()
+        err = column_values.std()
+        y_err_top_dt.append(mean_dt - max_dt)
+        y_err_bot_dt.append(min_dt - mean_dt)
+
+        y_err_std.append(err)
+        y_dt.append(mean_dt)
+        y_max_dt.append(max_dt)
+        y_min_dt.append(min_dt)
+
+    dy_dt = np.array([y_err_std, y_err_std])
+
+    # Real Error
+    target_list = np.arange(0.5, 2.05, 0.05)
+    eval_results_real = abs(eval_results_real - target_list)
+    real_error = []
+    std_error = []
+    for column in eval_results_real:
+        column_values = eval_results_real[column].values
+        mean_dt = column_values.mean()
+        err = column_values.std()
+
+        real_error.append(mean_dt)
+        std_error.append(err)
+
+    real_err_str = np.array([std_error, std_error])
+
+    # Plot Data
+    x = eval_results_sim.columns.to_numpy().astype(float)
+    error_fig.errorbar(x, y_dt, yerr=dy_dt, fmt='tab:blue', linewidth=1.5, elinewidth=1.0, capsize=4,
+                       capthick=1.0, label='Simulation Error')
+    error_fig.errorbar(x, real_error, yerr=real_err_str, fmt='tab:red', linewidth=1.5, elinewidth=1.0, capsize=4,
+                       capthick=1.0, label='Real Throws Error')
+    # error_fig.plot(x, real_error, color='tab:orange', linewidth=2, label='Real Throws Error')
+
+    # Plot baselines
+    error_fig.axhline(y=np.array(y_dt).mean(), color='tab:blue', linestyle='dotted', linewidth=2, label='Simulation Mean Error')
+    error_fig.axhline(y=np.array(real_error).mean(), color='tab:red', linestyle='dotted', linewidth=2, label='Real Throws Mean Error')
+    print(np.array(y_dt).mean(), np.array(real_error).mean())
+
+    # Legend
+    handles, labels = plt.gca().get_legend_handles_labels()
+    order = [3, 1, 2, 0]
+    error_fig.legend([handles[idx] for idx in order], [labels[idx] for idx in order])
+
+    # Save
+    plt.savefig('../results/evaluation_results/evaluation_real/eval_real.png')
+
+
 def plot_target_heatmap():
     # Load file
     target_list = pd.read_csv('../results/target_list_500.csv')
@@ -395,8 +502,7 @@ def stdout_redirected(to=os.devnull):
 
 
 if __name__ == '__main__':
-    # plot_results(result_dt_file='results/experiment_dt_offline_10k.csv',
-    #              result_ddpg_file='results/experiment_ddpg_offline_10k.csv')
     # plot_attempts_and_k()
     # plot_evaluation()
-    plot_target_heatmap()
+    plot_evaluation_real()
+    # plot_target_heatmap()

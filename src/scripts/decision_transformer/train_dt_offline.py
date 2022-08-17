@@ -12,7 +12,8 @@ from agent.trainer import Trainer
 from evaluate_dt import eval_model
 from env.robot_env_dt import RoboticArm
 
-FINETUNE = False
+# FINETUNE = False
+FINETUNE = True
 
 
 def run(data, embed_dim=1024, n_layer=1, bc=False):
@@ -63,26 +64,26 @@ def run(data, embed_dim=1024, n_layer=1, bc=False):
             s2.append(transition[0][:4][2])
             s3.append(transition[0][:4][3])
 
-    df = pd.DataFrame(target_list)
-    df.to_csv("results/target_list_500.csv")
+    # df = pd.DataFrame(target_list)
+    # df.to_csv("results/target_list_500.csv")
 
-    s0_mean = np.array(s0).mean()
-    s0_std = np.array(s0).std()
-    s1_mean = np.array(s1).mean()
-    s1_std = np.array(s1).std()
-    s2_mean = np.array(s2).mean()
-    s2_std = np.array(s2).std()
-    s3_mean = np.array(s3).mean()
-    s3_std = np.array(s3).std()
-
-    state_mean = np.array([s0_mean, s1_mean, s2_mean, s3_mean, 0])
-    state_std = np.array([s0_std, s1_std, s2_std, s3_std, 1])
-    oc_ratio = closed_gripper_count / (open_gripper_count + closed_gripper_count)
-
-    print(f"Open gripper count: {open_gripper_count}, Closed gripper count: {closed_gripper_count}, "
-          f"O/C Ratio: {oc_ratio}")
-    print(f"Total throws: {(fails + successes)} ,Successes: {successes}, Fails: {fails}")
-    print(f"State mean: {state_mean}, State STD: {state_std}")
+    # s0_mean = np.array(s0).mean()
+    # s0_std = np.array(s0).std()
+    # s1_mean = np.array(s1).mean()
+    # s1_std = np.array(s1).std()
+    # s2_mean = np.array(s2).mean()
+    # s2_std = np.array(s2).std()
+    # s3_mean = np.array(s3).mean()
+    # s3_std = np.array(s3).std()
+    #
+    # state_mean = np.array([s0_mean, s1_mean, s2_mean, s3_mean, 0])
+    # state_std = np.array([s0_std, s1_std, s2_std, s3_std, 1])
+    # oc_ratio = closed_gripper_count / (open_gripper_count + closed_gripper_count)
+    #
+    # print(f"Open gripper count: {open_gripper_count}, Closed gripper count: {closed_gripper_count}, "
+    #       f"O/C Ratio: {oc_ratio}")
+    # print(f"Total throws: {(fails + successes)} ,Successes: {successes}, Fails: {fails}")
+    # print(f"State mean: {state_mean}, State STD: {state_std}")
 
     def get_batch(batch_size=256, max_len=K):
 
@@ -154,7 +155,7 @@ def run(data, embed_dim=1024, n_layer=1, bc=False):
                 act_dim=act_dim,
                 max_length=K,
                 hidden_size=embed_dim,
-                n_layer=3,
+                n_layer=n_layer,
             )
 
         else:
@@ -181,9 +182,20 @@ def run(data, embed_dim=1024, n_layer=1, bc=False):
         model = model.to(device=device)
         model.save(file_name='dt_trained.pth')
 
+        # Train
+        if FINETUNE:
+            max_iters = 20
+            num_of_steps = 100
+            warmup_steps = 1000
+        else:
+            arm_new = RoboticArm()
+            arm_new.gripper_thresh = oc_ratio
+            max_iters = 80  # 100, 20
+            num_of_steps = 100  # 64, 2000
+            warmup_steps = 5000
+
         optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
 
-        warmup_steps = 5000
         scheduler = torch.optim.lr_scheduler.LambdaLR(
             optimizer,
             lambda steps: min((steps + 1) / warmup_steps, 1)
@@ -197,16 +209,6 @@ def run(data, embed_dim=1024, n_layer=1, bc=False):
             device=device,
             scheduler=scheduler
         )
-
-        # Train
-        if FINETUNE:
-            max_iters = 10
-            num_of_steps = 100
-        else:
-            arm_new = RoboticArm()
-            arm_new.gripper_thresh = oc_ratio
-            max_iters = 80  # 100, 20
-            num_of_steps = 100  # 64, 2000
 
         # First evaluation
         evaluation_list = []
@@ -277,12 +279,16 @@ def run(data, embed_dim=1024, n_layer=1, bc=False):
 
 
 if __name__ == '__main__':
-    path = './data/attempts_and_k_exp/'
-    exp_list = glob.glob(path + 'mem*')
-    for exp in exp_list:
-        # run(data=exp)  # 0.37 - 0.1
-        run(data=exp, embed_dim=128, n_layer=1, bc=True)  # 0.39 - 0.08
-        # run(data=exp, embed_dim=128, n_layer=3)  # 0.61 - 0.31
-        # run(data=exp, embed_dim=256, n_layer=1)  # 0.43 - 0.17
-        # run(data=exp, embed_dim=256, n_layer=3)  # 0.49 - 0.16
-        # run(data=exp, embed_dim=512, n_layer=1)  # 0.37 - 0.17
+    # path = './data/attempts_and_k_exp/'
+    # exp_list = glob.glob(path + 'mem*')
+    # for exp in exp_list:
+    #     run(data=exp)  # 0.37 - 0.1
+    #     run(data=exp, embed_dim=128, n_layer=1)  # 0.39 - 0.08
+    #     run(data=exp, embed_dim=128, n_layer=3)  # 0.61 - 0.31
+    #     run(data=exp, embed_dim=256, n_layer=1)  # 0.43 - 0.17
+    #     run(data=exp, embed_dim=256, n_layer=3)  # 0.49 - 0.16
+    #     run(data=exp, embed_dim=512, n_layer=1)  # 0.37 - 0.17
+    #     run(data=exp, embed_dim=256, n_layer=3, bc=True)  # 0.39 - 0.08
+
+    data = './data/memory_real_finetune2_traj-16_herK-0.pkl'
+    run(data=data)

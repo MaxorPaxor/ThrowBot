@@ -78,11 +78,6 @@ def eval_model(arm, model, state_mean=None, state_std=None, print_info=True, tar
             actions[-1] = action
             action = action.detach().cpu().numpy()
 
-            ### Delete
-            action = agent.get_action_random()  # get action
-            action = action.detach().cpu().numpy()
-            ###
-
             reward, done, termination_reason, obj_pos, success = arm.step(action)  # perform action and get new state
             rewards[-1] = reward
             target_return = torch.cat([target_return, target_return[0, -1].reshape(1, 1)], dim=1)

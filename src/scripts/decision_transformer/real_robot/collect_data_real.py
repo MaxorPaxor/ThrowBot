@@ -5,11 +5,12 @@ import pickle
 import time
 from collections import deque
 
+from real_robot.optitrack_detection import OptiTrack
 from real_robot.robot_env_dt_real import RoboticArm
 from agent.model_dt.model_dt import DecisionTransformer
 from agent.agent_dt import Agent
 
-EXPLORATION = True
+EXPLORATION = False
 
 
 def collect_real_data(arm, model):
@@ -21,26 +22,30 @@ def collect_real_data(arm, model):
     model.eval()
     n_episodes = 0
 
+    optitrack = OptiTrack()
+
     agent = Agent(arm=arm, load_nn=False, load_mem=False)
     agent.epsilon_arm = 100  # 50
     agent.soft_exploration_rate = 0
     agent.epsilon_arm_decay = 0
     agent.MAX_MEMORY = 8000  # Number of trajectories
-    agent.memory = deque(maxlen=int(agent.MAX_MEMORY))  # collect agent.MAX_MEMORY transitions
-    agent.k = 8
+    agent.memory_k0 = deque(maxlen=int(agent.MAX_MEMORY))  # collect agent.MAX_MEMORY transitions
+    agent.k = 0
 
     temp_mem = []
     # target_list = np.arange(0.3, 2.5, 0.1)
-    target_list = np.arange(0.3, 2.5, 0.1)
-    # amp_range = np.arange(1, 4, 1)
-    amp_range = np.arange(2.0, 4, 0.5)
+    target_list = np.arange(0.5, 2.1, 0.1)
+    # amp_range = np.arange(2.0, 4, 0.5)
+    amp_range = [1]
 
+    print('---')
     for x in target_list:
         for amp in amp_range:
 
-            _ = input(f"Throw #{n_episodes}/{len(target_list) * len(amp_range)}\n"
-                      f"Press ENTER to throw.")
+            confirm(x)
 
+            # Update target
+            optitrack.landing_spot = None
             target = np.array([x, 0.0, 0.0])
             arm.update_target(target)
 
@@ -55,7 +60,6 @@ def collect_real_data(arm, model):
 
             arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
             done = False
-            print('---')
             while not done:
 
                 state_ = arm.get_state()  # get state
@@ -83,13 +87,14 @@ def collect_real_data(arm, model):
                         action_[-1] = 1.0
 
                 done, termination_reason = arm.step(action_)  # perform action and get new state
-                print(action_)
 
                 if done:
-                    # reset_arm()
-                    object_position_ = float(input(f'Target: {x}. Input object position '))
+                    time.sleep(2)
+                    # object_position_ = float(input(f'Target: {x}. Input object position '))
+                    object_position_ = optitrack.landing_spot
                     object_position = np.array([object_position_, 0, 0])
                     distance_from_target = calc_dist_from_goal(object_position, arm.target)
+                    print(f"Landing Spot: {object_position_}, Error: {distance_from_target}")
 
                     if distance_from_target < arm.target_radius:
                         reward_ = 1.0  # Reward
@@ -108,14 +113,14 @@ def collect_real_data(arm, model):
                 temp_mem.append((state_, action_, reward_, done))
 
             # DONE
-            agent.generate_her_memory(temp_mem, obj_final_pos=object_position)
+            agent.generate_her_memory(temp_mem, target=target,
+                                      obj_final_pos=object_position, k=0)
             temp_mem = []
             reset_arm()
             n_episodes += 1
 
-            pickle.dump(agent.memory, open(f"../data/memory_real_"
+            pickle.dump(agent.memory_k0, open(f"../data/memory_real_finetune2_"
                                            f"traj-{len(target_list) * len(amp_range)}_"
-                                           f"Hz-{arm.UPDATE_RATE}_"
                                            f"herK-{agent.k}.pkl", 'wb'))
 
             print('\n')
@@ -123,11 +128,19 @@ def collect_real_data(arm, model):
 
 def reset_arm():
     print("Restarting arm...")
-    time.sleep(3)
+    time.sleep(2)
     arm_new.step(np.array([0.0, 0.0, 0.0, 1.0]))
     arm_new.reset_arm()
-    time.sleep(3)
+    time.sleep(2)
     print("Done.")
+
+
+def confirm(target, angle=0):
+    # Confirmation
+    confirm = input(f"Distance: {target}, Angle: {angle}\n"
+                    f"confirm (y/n)? ")
+    if confirm != 'y':
+        exit()
 
 
 def calc_dist_from_goal(obj_pos, target):
@@ -162,7 +175,8 @@ if __name__ == "__main__":
         attn_pdrop=0.0,
     )
 
-    checkpoint = torch.load("../weights/dt_trained_best_pid-high.pth", map_location=torch.device('cpu'))
+    # checkpoint = torch.load("../weights/dt_trained_best_pid-high.pth", map_location=torch.device('cpu'))
+    checkpoint = torch.load("../weights/dt_trained_simulation_real_cur-best.pth", map_location=torch.device('cpu'))
     model.load_state_dict(checkpoint['state_dict'])
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

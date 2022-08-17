@@ -18,7 +18,7 @@ class Agent:
 
         # HER
         self.her = arm.her
-        self.k = 4
+        self.k = 10
         self.generate_targets_factor_radius = 1.0
 
         # Dynamics
@@ -90,7 +90,7 @@ class Agent:
         if self.epsilon_arm > 3:
             self.epsilon_arm = self.epsilon_arm * (1 - self.epsilon_arm_decay)
         else:
-            self.epsilon_arm = 3
+            self.epsilon_arm = 0
 
             # Decide if next episode will have exploration
         if random.randint(0, 100) <= self.epsilon_arm:
@@ -248,13 +248,15 @@ class Agent:
             target_list = [self.arm.target]
 
         elif self.k == 0:
-            target_list = [obj_final_pos]
+            target_list = [self.arm.target, obj_final_pos]
 
         else:
             target_list = [self.arm.target, obj_final_pos]
             # Create another k-1 targets
             for _ in range(self.k - 1):
                 rand = np.random.rand() * 2 - 1  # Random [-1, 1]
+                # rand = np.random.normal()
+                # rand = np.clip(rand, a_max=1, a_min=-1)
                 x = obj_final_pos[0] + self.arm.target_radius * rand * self.generate_targets_factor_radius
                 if x > 0:
                     new_target = np.array([x, 0, 0])

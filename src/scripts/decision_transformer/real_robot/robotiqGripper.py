@@ -552,6 +552,9 @@ class RobotiqGripper(mm.Instrument):
 
 
 if __name__ == '__main__':
+    # import os
+    # os.system("sudo chmod +777 /dev/ttyUSB0")
+
     grip = RobotiqGripper("/dev/ttyUSB0", slaveaddress=9)
     grip.reset()
     grip.activate()
@@ -563,6 +566,6 @@ if __name__ == '__main__':
     grip.closemm = 0
     grip.openmm = 860
 
-    grip.goTomm(270)
+    grip.goTomm(245)
     # time.sleep(0.05)
     # grip.goTomm(300)

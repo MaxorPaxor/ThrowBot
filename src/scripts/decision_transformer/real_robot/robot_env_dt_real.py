@@ -61,7 +61,7 @@ class RoboticArm:
         self.gripper_object._bCoef = 1086.8131
         self.gripper_object.closemm = 0
         self.gripper_object.openmm = 860
-        self.gripper_object.goTomm(270, 255, 255)
+        self.gripper_object.goTomm(245, 255, 255)
         print("Gripper is ready")
 
         # Init connections
@@ -153,7 +153,7 @@ class RoboticArm:
 
         return trajectory
 
-    def reset_arm(self):
+    def reset_arm(self, angle=1.5707):
         """
         Commands robotic arm joints velocities
         """
@@ -176,7 +176,7 @@ class RoboticArm:
         # trajectory.joint_names.append("finger_joint")
 
         # Current_position + NN_velocity_output(-1 < V < +1) * max_speed(rd/s) * time(1/frequency)
-        pos_1 = 1.5707  # -1.5707
+        pos_1 = angle  # -1.5707
         pos_2 = 0.5
         pos_3 = -0.3
         pos_4 = 0.0
@@ -206,7 +206,54 @@ class RoboticArm:
         # self.gripper_object ._bCoef = 1086.8131
         # self.gripper_object .closemm = 0
         # self.gripper_object .openmm = 860
-        self.gripper_object .goTomm(270, 255, 255)
+        self.gripper_object .goTomm(245, 255, 255)
+
+    def trajectory(self, j1=-1.5707, j2=0.5, j3=-0.3, j4=0.0,
+                   j5=-1.5, j6=-0.785398, gripper=-1.0, dt=None):
+        """
+        Commands robotic arm joints position
+        """
+
+        trajectory = JointTrajectory()
+        point = JointTrajectoryPoint()
+
+        trajectory.header.stamp = rospy.Time.now()
+        trajectory.header.frame_id = ''
+        trajectory.header.seq = 0
+
+        trajectory.joint_names.append("joint_1_s")
+        trajectory.joint_names.append("joint_2_l")
+        trajectory.joint_names.append("joint_3_u")
+        trajectory.joint_names.append("joint_4_r")
+        trajectory.joint_names.append("joint_5_b")
+        trajectory.joint_names.append("joint_6_t")
+
+        if gripper >= 0:
+            gripper = 0.625
+        else:
+            gripper = 0.5
+
+        point.positions.append(j1)  # 0.0
+        point.positions.append(j2)  # 0.5
+        point.positions.append(j3)
+        point.positions.append(j4)
+        point.positions.append(j5)
+        point.positions.append(j6)
+
+        point.velocities.append(0)
+        point.velocities.append(0)
+        point.velocities.append(0)
+        point.velocities.append(0)
+        point.velocities.append(0)
+        point.velocities.append(0)
+
+        if dt is None:
+            dt = 1.0 / self.UPDATE_RATE
+
+        point.time_from_start = rospy.Duration(dt * self.curr_step)
+        trajectory.points.append(point)
+
+        return trajectory
 
     def joint_states_callback(self, msg):
         """
@@ -335,6 +382,16 @@ class RoboticArm:
             done = False
         return done, termination_reason
 
+    def rotate(self, angle):
+        dt = 1
+        angle = np.deg2rad(angle + 90)
+        trajectory = self.trajectory(angle, dt=1)
+        self.pub_command.publish(trajectory)
+
+        time.sleep(5*dt)
+        self.curr_time += 5*dt
+        self.curr_step += 1
+
     def first_step(self, velocity_vector):
         """
         Performs 1 step for the robotic arm and checks if stop conditions are met
@@ -363,23 +420,25 @@ class RoboticArm:
 if __name__ == '__main__':
     robotic_arm = RoboticArm()
     robotic_arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
+    robotic_arm.rotate(angle=15)
+    # robotic_arm.reset_arm(angle=np.deg2rad(-0 + 90))
 
-    for i in range(1, 30):
-
-        state = robotic_arm.get_state()
-        print(state)
-
-        if i == 10:
-            print(i)
-            # robotic_arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
-            action = np.array([-0.5, 0.5, 0.5, 0.99])
-            done, termination_reason = robotic_arm.step(action)
-
-        elif i == 20:
-            print(i)
-            # robotic_arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
-            action = np.array([0.5, -0.5, -0.5, 0.99])
-            done, termination_reason = robotic_arm.step(action)
-
-        else:
-            time.sleep(1.0 / robotic_arm.UPDATE_RATE)
+    # for i in range(1, 30):
+    #
+    #     state = robotic_arm.get_state()
+    #     print(state)
+    #
+    #     if i == 10:
+    #         print(i)
+    #         # robotic_arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
+    #         action = np.array([-0.5, 0.5, 0.5, 0.99])
+    #         done, termination_reason = robotic_arm.step(action)
+    #
+    #     elif i == 20:
+    #         print(i)
+    #         # robotic_arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
+    #         action = np.array([0.5, -0.5, -0.5, 0.99])
+    #         done, termination_reason = robotic_arm.step(action)
+    #
+    #     else:
+    #         time.sleep(1.0 / robotic_arm.UPDATE_RATE)
