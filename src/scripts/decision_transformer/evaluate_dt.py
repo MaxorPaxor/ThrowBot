@@ -185,12 +185,14 @@ if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device=device)
 
-    errors = []
-    target_list = np.arange(0.5, 2.05, 0.05)
-    for _ in range(30):
-        _, _, error = eval_model(arm=arm_new, model=model, target=target_list)
-        errors.append(error)
+    # errors = []
+    # target_list = np.arange(0.5, 2.05, 0.05)
+    # for _ in range(30):
+    #     _, _, error = eval_model(arm=arm_new, model=model, target=target_list)
+    #     errors.append(error)
+    #
+    # results_cols = target_list
+    # df = pd.DataFrame(errors, columns=results_cols)
+    # df.to_csv(f'results/evaluation_results/eval_random.csv', index=False)
 
-    results_cols = target_list
-    df = pd.DataFrame(errors, columns=results_cols)
-    df.to_csv(f'results/evaluation_results/eval_random.csv', index=False)
+    _, _, error = eval_model(arm=arm_new, model=model, target=[1.9])

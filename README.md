@@ -7,11 +7,11 @@ industrial robotic arm, in a model-free manner, to accurately throw objects to a
 with minimal amounts of random data.
 
 <p align="center">
-<img src="gif/ThrowBotHer.gif">
+<img src="gif/throw_many.gif">
 </p>
-<h5 align="center">Motoman-gp8 throwing 0.5kg box at generated targets</h5>
+<h5 align="center">Motoman-gp8 throwing into boxes</h5>
 
-## Dependencies
+## Installation
 ### ROS Dependencies
 1. **Motoman**
 fixed motoman point-streaming:
