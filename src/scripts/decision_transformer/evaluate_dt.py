@@ -30,6 +30,7 @@ def eval_model(arm, model, state_mean=None, state_std=None, print_info=True, tar
     reward_list = []
     distance_from_target_list = []
     hit_list = []
+    hit_target_list = []
     average_distance = None
     n_episodes = 0
 
@@ -43,9 +44,9 @@ def eval_model(arm, model, state_mean=None, state_std=None, print_info=True, tar
     episode_length = 0
 
     if target is None:
-        target_list = np.arange(0.5, 2.5, 0.2)
+        target_list = np.arange(0.5, 2.1, 0.1)
     else:
-        target_list = np.array(target)
+        target_list = target
 
     for x in target_list:
 
@@ -93,10 +94,8 @@ def eval_model(arm, model, state_mean=None, state_std=None, print_info=True, tar
         hit_list_np = np.array(hit_list)
         hit_rate = np.mean(hit_list_np)
 
-        reward_list.append(reward)
-        reward_list_np = np.array(reward_list)
-        average_reward = np.mean(reward_list_np)
-        std_reward = np.std(reward_list_np)
+        if reward == 1:
+            hit_target_list.append(x)
 
         distance_from_goal = calc_dist_from_goal(obj_pos, arm.target)
         distance_from_target_list.append(distance_from_goal)
@@ -109,14 +108,11 @@ def eval_model(arm, model, state_mean=None, state_std=None, print_info=True, tar
                   f' {"    Episode Number:":40} {n_episodes}\n'
                   f' {"    Episode Length:":40} {episode_length}\n'
                   f' {"    Hit-rate:":40} {hit_rate}\n'
-                  f' {"    Reward:":40} {reward}\n'
-                  f' {"    Average Reward:":40} {average_reward}\n'
-                  f' {"    STD Reward:":40} {std_reward}\n'
                   f' {"    Target X:":40} {round(arm.target[0], 4)}\n'
                   f' {"    Final Object X Position:":40} {round(obj_pos[0], 4)}\n'
                   f' {"    Distance From Target:":40} {round(distance_from_goal, 4)}\n'
                   f' {"    Average Distance From Target:":40} {average_distance}\n'
-                  f' {"    Variance Distance:":40} {std_distance}\n')
+                  f' {"    STD Distance:":40} {std_distance}\n')
             print('=======================================================')
 
         else:
@@ -137,7 +133,7 @@ def eval_model(arm, model, state_mean=None, state_std=None, print_info=True, tar
         agent.noise_strong.reset()
 
     print(' Done.')
-    return average_distance, hit_rate, distance_from_target_list
+    return average_distance, std_distance, hit_rate, distance_from_target_list, hit_target_list
 
 
 def calc_dist_from_goal(obj_pos, target):
@@ -161,7 +157,7 @@ if __name__ == "__main__":
     arm_new.noise_actions = False
     arm_new.random_delay = 0
 
-    hidden_size = 1024
+    hidden_size = 128  # 1024
     n_head = 1
     model = DecisionTransformer(
         state_dim=len(arm_new .joints) * arm_new.number_states + 1,
@@ -178,21 +174,34 @@ if __name__ == "__main__":
         attn_pdrop=0.0,
     )
 
-    checkpoint = torch.load("./weights/dt_trained_best_pid-high.pth", map_location=torch.device('cpu'))
-    # checkpoint = torch.load("./weights/dt_trained_best_2.pth", map_location=torch.device('cpu'))
+    checkpoint = torch.load("./weights/dt_env-sim_model-big_pid-high.pth", map_location=torch.device('cpu'))
+    # checkpoint = torch.load("./weights/dt_best.pth", map_location=torch.device('cpu'))
     model.load_state_dict(checkpoint['state_dict'])
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device=device)
 
-    # errors = []
-    # target_list = np.arange(0.5, 2.05, 0.05)
-    # for _ in range(30):
-    #     _, _, error = eval_model(arm=arm_new, model=model, target=target_list)
-    #     errors.append(error)
+    target_list = np.arange(0.5, 2.2, 0.2)
+    _, _, hit_rate, _, target_list = eval_model(arm=arm_new, model=model, target=target_list)
+
+    # target_list_hits = []
+    # successes = 0
+    # total_throws = 0
+    # while successes < 1000:
+    #     target = np.random.rand() * 1.5 + 0.5
+    #     _, _, hit_rate, _, target_list = eval_model(arm=arm_new, model=model, target=[target])
     #
+    #     if hit_rate == 1:
+    #         target_list_hits.append(target)
+    #         successes += 1
+    #
+    #     total_throws += 1
+    #
+    #     print(hit_rate, target_list, total_throws, successes)
+
+    # df = pd.DataFrame(target_list_hits)
+    # df.to_csv("results/data_hist/target_list_hits.csv")
+
     # results_cols = target_list
     # df = pd.DataFrame(errors, columns=results_cols)
     # df.to_csv(f'results/evaluation_results/eval_random.csv', index=False)
-
-    _, _, error = eval_model(arm=arm_new, model=model, target=[1.9])

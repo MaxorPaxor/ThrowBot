@@ -262,10 +262,10 @@ class Agent:
     @staticmethod
     def generate_target_her():
         """
-        Generates random target in [0.5, 2.5] meters range
+        Generates random target in [0.5, 2.0] meters range
         """
 
-        x = np.random.rand() * 2 + 0.5
+        x = np.random.rand() * 1.5 + 0.5
         target = np.array([x, 0.0, 0.0])
         return target
 

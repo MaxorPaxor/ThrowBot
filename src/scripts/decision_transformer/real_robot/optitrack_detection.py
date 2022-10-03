@@ -122,8 +122,8 @@ if __name__ == '__main__':
     while True:
         print(f"Target: {optitrack.calculate_target_position_relative()}")
         # print(f"Object: {optitrack.calculate_object_position_relative()}")
-        print(f"Object:\n")
-        for p in optitrack.object_trajectory[-20:-1]:
-            print(p)
+        # print(f"Object:\n")
+        # for p in optitrack.object_trajectory[-20:-1]:
+        #     print(p)
         print(f" ----- ")
-        time.sleep(.1)
+        time.sleep(1.)

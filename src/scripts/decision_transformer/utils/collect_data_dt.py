@@ -112,7 +112,7 @@ def collect_data(n_attempts, k_her=0):
                         f' {"  Final object X position:":30} {round(obj_pos[0], 4)}\n'
                         f' {"  Distance From target:":30} {round(distance_from_goal, 4)}\n'
                         f' {"  Mean distance:":30} {round(mean_distance, 4)}\n'
-                        f' {"  Variance distance:":30} {round(std_distance, 4)}\n'
+                        f' {"  STD distance:":30} {round(std_distance, 4)}\n'
                         f' {"  Max distance:":30} {round(max_dis, 4)}\n'
                         f' {"EXPLORATION":30}\n'
                         f' {"  Exploration:":30} {agent.exploration_flag}\n'
@@ -127,19 +127,29 @@ def collect_data(n_attempts, k_her=0):
 
                 print(info)
 
-                if attempt == 99 or attempt == 499 or attempt == 999:
-                    # pickle.dump(agent.memory_raw, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
-                    #                                    f"her-raw.pkl", 'wb'))
-                    # pickle.dump(agent.memory_k0, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
-                    #                                   f"herK-0.pkl", 'wb'))
-                    # pickle.dump(agent.memory_k1, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
-                    #                                   f"herK-1.pkl", 'wb'))
-                    # pickle.dump(agent.memory_k3, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
-                    #                                   f"herK-3.pkl", 'wb'))
-                    # pickle.dump(agent.memory_k5, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
-                    #                                   f"herK-5.pkl", 'wb'))
-                    pickle.dump(agent.memory_k0, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
-                                                      f"herK-0_rho-0.01.pkl", 'wb'))
+                # if attempt == 99 or attempt == 499 or attempt == 999:
+                #     pickle.dump(agent.memory_raw, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
+                #                                        f"her-raw.pkl", 'wb'))
+                #     pickle.dump(agent.memory_k0, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
+                #                                       f"herK-0.pkl", 'wb'))
+                #     pickle.dump(agent.memory_k1, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
+                #                                       f"herK-1.pkl", 'wb'))
+                #     pickle.dump(agent.memory_k3, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
+                #                                       f"herK-3.pkl", 'wb'))
+                #     pickle.dump(agent.memory_k5, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
+                #                                       f"herK-5.pkl", 'wb'))
+
+                # if attempt == 49 or attempt == 249 or attempt == 749:
+                #     pickle.dump(agent.memory_raw, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
+                #                                        f"her-raw.pkl", 'wb'))
+                #     pickle.dump(agent.memory_k0, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
+                #                                       f"herK-0.pkl", 'wb'))
+                #     pickle.dump(agent.memory_k1, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
+                #                                       f"herK-1.pkl", 'wb'))
+                #     pickle.dump(agent.memory_k3, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
+                #                                       f"herK-3.pkl", 'wb'))
+                #     pickle.dump(agent.memory_k5, open(f"../data/memory_random_"f"attempts-{attempt + 1}_"
+                #                                       f"herK-5.pkl", 'wb'))
 
                 agent.update_exploration()
                 agent.episode_length = 0

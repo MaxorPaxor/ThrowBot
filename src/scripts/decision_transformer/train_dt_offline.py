@@ -2,6 +2,8 @@ import numpy as np
 import torch
 import pickle
 import pandas as pd
+import collections
+import itertools
 import glob
 
 from collections import deque
@@ -12,11 +14,8 @@ from agent.trainer import Trainer
 from evaluate_dt import eval_model
 from env.robot_env_dt import RoboticArm
 
-# FINETUNE = False
-FINETUNE = True
 
-
-def run(data, embed_dim=1024, n_layer=1, bc=False):
+def run(data, embed_dim=1024, n_layer=1, bc=False, traject_cut=None, finetune=False):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # device = "cpu"
     print(device)
@@ -30,6 +29,8 @@ def run(data, embed_dim=1024, n_layer=1, bc=False):
 
     print(data)
     trajectories = pickle.load(open(f'{data}', 'rb'))
+    if traject_cut is not None:
+        trajectories = list(itertools.islice(trajectories, 0, traject_cut))
 
     # (state, action, reward, done)
     fails = 0
@@ -65,25 +66,27 @@ def run(data, embed_dim=1024, n_layer=1, bc=False):
             s3.append(transition[0][:4][3])
 
     # df = pd.DataFrame(target_list)
-    # df.to_csv("results/target_list_500.csv")
+    # df.to_csv("results/data_hist/target_list_500.csv")
 
-    # s0_mean = np.array(s0).mean()
-    # s0_std = np.array(s0).std()
-    # s1_mean = np.array(s1).mean()
-    # s1_std = np.array(s1).std()
-    # s2_mean = np.array(s2).mean()
-    # s2_std = np.array(s2).std()
-    # s3_mean = np.array(s3).mean()
-    # s3_std = np.array(s3).std()
-    #
-    # state_mean = np.array([s0_mean, s1_mean, s2_mean, s3_mean, 0])
-    # state_std = np.array([s0_std, s1_std, s2_std, s3_std, 1])
-    # oc_ratio = closed_gripper_count / (open_gripper_count + closed_gripper_count)
-    #
-    # print(f"Open gripper count: {open_gripper_count}, Closed gripper count: {closed_gripper_count}, "
-    #       f"O/C Ratio: {oc_ratio}")
-    # print(f"Total throws: {(fails + successes)} ,Successes: {successes}, Fails: {fails}")
-    # print(f"State mean: {state_mean}, State STD: {state_std}")
+    s0_mean = np.array(s0).mean()
+    s0_std = np.array(s0).std()
+    s1_mean = np.array(s1).mean()
+    s1_std = np.array(s1).std()
+    s2_mean = np.array(s2).mean()
+    s2_std = np.array(s2).std()
+    s3_mean = np.array(s3).mean()
+    s3_std = np.array(s3).std()
+
+    state_mean = np.array([s0_mean, s1_mean, s2_mean, s3_mean, 0])
+    state_std = np.array([s0_std, s1_std, s2_std, s3_std, 1])
+
+    if open_gripper_count != 0 and closed_gripper_count != 0:
+        oc_ratio = closed_gripper_count / (open_gripper_count + closed_gripper_count)
+        print(f"Open gripper count: {open_gripper_count}, Closed gripper count: {closed_gripper_count}, "
+              f"O/C Ratio: {oc_ratio}")
+
+    print(f"Total throws: {(fails + successes)} ,Successes: {successes}, Fails: {fails}")
+    print(f"State mean: {state_mean}, State STD: {state_std}")
 
     def get_batch(batch_size=256, max_len=K):
 
@@ -174,19 +177,18 @@ def run(data, embed_dim=1024, n_layer=1, bc=False):
                 attn_pdrop=dropout,
             )
 
-        if FINETUNE:
-            # checkpoint = torch.load("./weights/dt_trained_best_pid-high.pth", map_location=torch.device('cpu'))
-            checkpoint = torch.load("./weights/dt_trained_simulation_real_cur-best.pth", map_location=torch.device('cpu'))
-            model.load_state_dict(checkpoint['state_dict'])
+        # if finetune:
+        #     checkpoint = torch.load("./weights/dt_env-sim_model-big_pid-high.pth", map_location=torch.device('cpu'))
+        #     model.load_state_dict(checkpoint['state_dict'])
 
         model = model.to(device=device)
-        model.save(file_name='dt_trained.pth')
+        model.save(file_name='dt_temp.pth')
 
         # Train
-        if FINETUNE:
-            max_iters = 20
-            num_of_steps = 100
-            warmup_steps = 1000
+        if finetune:
+            max_iters = 10  # 10
+            num_of_steps = 100  # 100
+            warmup_steps = 5000  # 1000
         else:
             arm_new = RoboticArm()
             arm_new.gripper_thresh = oc_ratio
@@ -194,7 +196,7 @@ def run(data, embed_dim=1024, n_layer=1, bc=False):
             num_of_steps = 100  # 64, 2000
             warmup_steps = 5000
 
-        optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
+        optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4, weight_decay=1e-4)
 
         scheduler = torch.optim.lr_scheduler.LambdaLR(
             optimizer,
@@ -220,49 +222,49 @@ def run(data, embed_dim=1024, n_layer=1, bc=False):
         best_hit_rate = hit_rate
 
         print('=' * 40)
-        train_loss = trainer.train_iteration(num_steps=num_of_steps * 20, bc=bc)
+        print('Warming up...')
+        train_loss = trainer.train_iteration(num_steps=num_of_steps * 20, bc=bc)  # 30
+        print('Done')
         for iter in range(max_iters):
             train_loss = trainer.train_iteration(num_steps=num_of_steps, bc=bc)
 
-            if FINETUNE:
-                model.save(file_name=f'dt_trained_simulation_real_iter-{iter}_.pth')
+            if finetune:
+                model.save(file_name=f'dt_simulation_real_data-{len(trajectories)}_iter-{iter}.pth')
             else:
-                model.save(file_name='dt_trained.pth')
+                model.save(file_name='dt_temp.pth')
 
                 # Evaluate
-                score_eval, hit_rate, _ = eval_model(arm=arm_new, model=model,
-                                                     # state_mean=state_mean, state_std=state_std,
-                                                     print_info=False,
-                                                     bc=bc)
+                score_eval, std, hit_rate, _, _ = eval_model(arm=arm_new, model=model,
+                                                             # state_mean=state_mean, state_std=state_std,
+                                                             print_info=False,
+                                                             bc=bc)
 
                 hit_rate_list.append(hit_rate)
                 evaluation_list.append(score_eval)
                 evaluation_list_np = np.array(evaluation_list)
-                evaluation_var = evaluation_list_np.var()
+                evaluation_std = evaluation_list_np.std()
                 evaluation_mean = evaluation_list_np.mean()
 
                 if best_hit_rate is None or hit_rate > best_hit_rate:
                     best_hit_rate = hit_rate
-                    # best_score_eval = score_eval
-                    # model.save(file_name='dt_trained_best.pth')
 
-                # elif hit_rate == best_hit_rate:
                 if best_score_eval is None or score_eval < best_score_eval:
                     best_score_eval = score_eval
-                    model.save(file_name='dt_trained_best.pth')
+                    model.save(file_name='dt_best.pth')
 
             loss_list.append(train_loss)
 
-            print(f"Experiment: {experiment+1}/{number_experiments}")
-            print(f"Iteration: {iter+1}/{max_iters}")
+            print(f"Experiment: {experiment + 1}/{number_experiments}")
+            print(f"Iteration: {iter + 1}/{max_iters}")
             print(f"Loss: {train_loss}")
-            if not FINETUNE:
-                print(f"Evaluation Hit-rate: {hit_rate}")
-                print(f"Evaluation Score: {score_eval}")
-                print(f"Evaluation Var: {evaluation_var}")
-                print(f"Evaluation Mean: {evaluation_mean}")
-                print(f"Evaluation Best Score: {best_score_eval}")
-                print(f"Evaluation Best Hit Rate: {best_hit_rate}")
+            if not finetune:
+                print(f"Evaluation hit-rate: {hit_rate}")
+                print(f"Evaluation score: {score_eval}")
+                print(f"Evaluation STD: {std}")
+                print(f"STD of all evaluations: {evaluation_std}")
+                print(f"Evaluation mean: {evaluation_mean}")
+                print(f"Evaluation best score: {best_score_eval}")
+                print(f"Evaluation best hit rate: {best_hit_rate}")
 
             print('=' * 40)
 
@@ -271,24 +273,24 @@ def run(data, embed_dim=1024, n_layer=1, bc=False):
         df['loss'] = loss_list
         print(df)
 
-        if FINETUNE:
-            df.to_csv(f'results/finetune_results_iters-{max_iters}.csv', index=False)
+        if finetune:
+            df.to_csv(f'results/finetune_results_traject-{traject_cut}.csv', index=False)
         else:
             session_name = data.split('.')[-2].split('/')[-1]
-            df.to_csv(f'results/{session_name}_bc-{bc}_results.csv', index=False)
+            df.to_csv(f'results/{session_name}_results.csv', index=False)
 
 
 if __name__ == '__main__':
-    # path = './data/attempts_and_k_exp/'
-    # exp_list = glob.glob(path + 'mem*')
-    # for exp in exp_list:
-    #     run(data=exp)  # 0.37 - 0.1
-    #     run(data=exp, embed_dim=128, n_layer=1)  # 0.39 - 0.08
-    #     run(data=exp, embed_dim=128, n_layer=3)  # 0.61 - 0.31
-    #     run(data=exp, embed_dim=256, n_layer=1)  # 0.43 - 0.17
-    #     run(data=exp, embed_dim=256, n_layer=3)  # 0.49 - 0.16
-    #     run(data=exp, embed_dim=512, n_layer=1)  # 0.37 - 0.17
-    #     run(data=exp, embed_dim=256, n_layer=3, bc=True)  # 0.39 - 0.08
+    path = './data/attempts_and_k_exp/'
+    exp_list = glob.glob(path + 'mem*')
+    for exp in exp_list:
+        # run(data=exp)  # 0.37 - 0.1
+        run(data=exp, embed_dim=128, n_layer=1)  # 0.39 - 0.08
+        # run(data=exp, embed_dim=128, n_layer=3)  # 0.61 - 0.31
+        # run(data=exp, embed_dim=256, n_layer=1)  # 0.43 - 0.17
+        # run(data=exp, embed_dim=256, n_layer=3)  # 0.49 - 0.16
+        # run(data=exp, embed_dim=512, n_layer=1)  # 0.37 - 0.17
+        # run(data=exp, embed_dim=256, n_layer=3, bc=True)
 
-    data = './data/memory_real_finetune2_traj-16_herK-0.pkl'
-    run(data=data)
+    # data = './data/memory_real_traj-50_herK-0_pid-high.pkl'
+    # run(data=data, traject_cut=3, finetune=True)

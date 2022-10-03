@@ -30,6 +30,8 @@ def train():
     mean_distance_eval = None
     best_evaluation_distance = None
     best_eval_episode = None
+    best_eval_std = None
+    std = None
     evaluated_epochs_list = []
 
     arm = RoboticArm()
@@ -48,7 +50,6 @@ def train():
     while True:
         state = arm.get_n_state()  # get state
         action = agent.get_action(state)  # get action
-        print(action)
         reward, done, termination_reason, obj_pos, success = arm.step(action)  # perform action and get new state
         state_new = arm.get_n_state()  # get new state
 
@@ -85,13 +86,14 @@ def train():
 
             # Evaluation
             if agent.num_epoch % agent.evaluate_every_n_epoch == 0 and agent.num_epoch > agent.last_evaluated_epoch:
-                mean_distance_eval = eval_model(arm=arm, agent=agent, print_info=False)
+                mean_distance_eval, std = eval_model(arm=arm, agent=agent, print_info=False)
                 mean_distance_evaluated_list.append(mean_distance_eval)
                 evaluated_epochs_list.append(agent.num_epoch)
                 agent.last_evaluated_epoch = agent.num_epoch
 
                 if best_evaluation_distance is None or mean_distance_eval < best_evaluation_distance:
                     best_evaluation_distance = mean_distance_eval
+                    best_eval_std = std
                     best_eval_episode = agent.n_episodes
 
             info = (f' {"GENERAL":30}\n'
@@ -102,17 +104,19 @@ def train():
                     f' {"  Reward:":30} {round(reward, 4)}\n'
                     f' {"  Record reward:":30} {round(agent.record, 4)}\n'
                     f' {"  Mean reward:":30} {mean_reward}\n'
-                    f' {"  Variance reward:":30} {std_reward}\n'
+                    f' {"  STD reward:":30} {std_reward}\n'
                     f' {"DISTANCE":30}\n'
                     f' {"  Target X:":30} {round(arm.target[0], 4)}\n'
                     f' {"  Final object X position:":30} {round(obj_pos[0], 4)}\n'
                     f' {"  Distance From target:":30} {round(distance_from_goal, 4)}\n'
                     f' {"  Mean distance:":30} {round(mean_distance, 4)}\n'
-                    f' {"  Variance distance:":30} {round(std_distance, 4)}\n'
+                    f' {"  STD distance:":30} {round(std_distance, 4)}\n'
                     f' {"EVALUATION":30}\n'
-                    f' {"  Mean evaluation distance:":30} {mean_distance_eval}\n'
-                    f' {"  Best evaluation distance:":30} {best_evaluation_distance}\n'
-                    f' {"  Var evaluation distance:":30} {np.array(mean_distance_evaluated_list).var()}\n'
+                    f' {"  Evaluation:":30} {mean_distance_eval}\n'
+                    f' {"  Evaluation STD:":30} {std}\n'
+                    f' {"  Best evaluation:":30} {best_evaluation_distance}\n'
+                    f' {"  Best evaluation STD:":30} {best_eval_std}\n'
+                    f' {"  STD of all evaluations:":30} {np.array(mean_distance_evaluated_list).std()}\n'
                     f' {"  Best evaluation episode:":30} {best_eval_episode}\n'
                     f' {"  Last evaluated epoch:":30} {agent.last_evaluated_epoch}\n'
                     f' {"EXPLORATION":30}\n'

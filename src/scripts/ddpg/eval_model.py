@@ -14,7 +14,7 @@ def eval_model(arm, agent, target=None, print_info=True):
     n_episodes = 0
 
     if target is None:
-        target_list = np.arange(0.5, 2.5, 0.2)
+        target_list = np.arange(0.5, 2.05, 0.05)
     else:
         target_list = np.array(target)
 
@@ -56,7 +56,7 @@ def eval_model(arm, agent, target=None, print_info=True):
                   f' {"    Final Object X Position:":40} {round(obj_pos[0], 4)}\n'
                   f' {"    Distance From Target:":40} {round(distance_from_goal, 4)}\n'
                   f' {"    Average Distance From Target:":40} {average_distance}\n'
-                  f' {"    Variance Distance:":40} {std_distance}\n')
+                  f' {"    STD Distance:":40} {std_distance}\n')
             print('=======================================================')
 
         else:
@@ -64,7 +64,7 @@ def eval_model(arm, agent, target=None, print_info=True):
 
         agent.episode_length = 0
 
-    return average_distance
+    return average_distance, std_distance
 
 
 if __name__ == "__main__":

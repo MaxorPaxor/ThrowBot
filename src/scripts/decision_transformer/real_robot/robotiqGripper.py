@@ -566,6 +566,7 @@ if __name__ == '__main__':
     grip.closemm = 0
     grip.openmm = 860
 
-    grip.goTomm(245)
+    grip.goTomm(1200)
+    # grip.goTomm(1005)
     # time.sleep(0.05)
     # grip.goTomm(300)

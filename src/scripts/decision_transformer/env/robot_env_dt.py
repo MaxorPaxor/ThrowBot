@@ -28,7 +28,7 @@ class RoboticArm:
 
         # HER attributes
         self.her = True
-        self.target_radius = 0.05  # meters
+        self.target_radius = 0.1  # meters
 
         # States
         self.number_states = 1

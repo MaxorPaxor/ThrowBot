@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 
 class OUActionNoise(object):
     def __init__(self, mu, sigma=0.45, theta=0.1, dt=2e-2, x0=None):
+        # dt = 1e-1, theta = 0.02, sigma = 0.2
         self.theta = theta
         self.mu = mu
         self.sigma = sigma

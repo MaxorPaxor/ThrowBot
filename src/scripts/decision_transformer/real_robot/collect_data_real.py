@@ -14,7 +14,6 @@ EXPLORATION = False
 
 
 def collect_real_data(arm, model):
-
     # Reset arm
     reset_arm()
 
@@ -33,8 +32,7 @@ def collect_real_data(arm, model):
     agent.k = 0
 
     temp_mem = []
-    # target_list = np.arange(0.3, 2.5, 0.1)
-    target_list = np.arange(0.5, 2.1, 0.1)
+    target_list = np.arange(0.5, 2.05, 0.05)
     # amp_range = np.arange(2.0, 4, 0.5)
     amp_range = [1]
 
@@ -107,7 +105,7 @@ def collect_real_data(arm, model):
                 rewards[-1] = reward_
                 target_return = torch.cat([target_return, target_return[0, -1].reshape(1, 1)], dim=1)
                 timesteps = torch.cat(
-                    [timesteps, torch.ones((1, 1), device=device, dtype=torch.long) * (episode_length+1)], dim=1)
+                    [timesteps, torch.ones((1, 1), device=device, dtype=torch.long) * (episode_length + 1)], dim=1)
                 episode_length += 1
 
                 temp_mem.append((state_, action_, reward_, done))
@@ -119,11 +117,124 @@ def collect_real_data(arm, model):
             reset_arm()
             n_episodes += 1
 
-            pickle.dump(agent.memory_k0, open(f"../data/memory_real_finetune2_"
-                                           f"traj-{len(target_list) * len(amp_range)}_"
-                                           f"herK-{agent.k}.pkl", 'wb'))
+            pickle.dump(agent.memory_k0, open(f"../data/memory_real_"
+                                              f"traj-{len(target_list)}_"
+                                              f"herK-{agent.k}.pkl", 'wb'))
 
             print('\n')
+
+
+def collect_n_real_data(arm, model):
+    # Reset arm
+    reset_arm()
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model.eval()
+    n_episodes = 0
+
+    optitrack = OptiTrack()
+
+    agent = Agent(arm=arm, load_nn=False, load_mem=False)
+    agent.epsilon_arm = 100  # 50
+    agent.soft_exploration_rate = 0
+    agent.epsilon_arm_decay = 0
+    agent.MAX_MEMORY = 8000  # Number of trajectories
+    agent.memory_k0 = deque(maxlen=int(agent.MAX_MEMORY))  # collect agent.MAX_MEMORY transitions
+    agent.k = 0
+
+    temp_mem = []
+    n = 50
+    print('---')
+    for attempt in range(n):
+
+        x = np.random.uniform(low=0.5, high=2.0)
+        amp = np.random.uniform(low=1.0, high=3.5)
+        # amp = np.clip(np.random.normal(3.5), a_min=1, a_max=3.5)
+        print(f"attempt: {attempt}/{n}")
+        print(f"amp: {amp}")
+
+        confirm(x)
+
+        # Update target
+        optitrack.landing_spot = None
+        target = np.array([x, 0.0, 0.0])
+        arm.update_target(target)
+
+        states = torch.zeros((0, model.state_dim), device=device, dtype=torch.float32)
+        actions = torch.zeros((0, model.act_dim), device=device, dtype=torch.float32)
+        rewards = torch.zeros(0, device=device, dtype=torch.float32)
+        ep_return = 1.
+        target_return = torch.tensor(ep_return, device=device, dtype=torch.float32).reshape(1, 1)
+        timesteps = torch.tensor(0, device=device, dtype=torch.long).reshape(1, 1)
+
+        episode_length = 0
+
+        arm.first_step(np.array([0.0, 0.0, 0.0, 1.0]))
+        done = False
+        while not done:
+
+            state_ = arm.get_state()  # get state
+            state = np.append(state_, arm.target[0])  # append target
+            state = torch.from_numpy(state).reshape(1, model.state_dim).to(device=device, dtype=torch.float32)
+            states = torch.cat([states, state], dim=0)
+            actions = torch.cat([actions, torch.zeros((1, model.act_dim), device=device)], dim=0)
+            rewards = torch.cat([rewards, torch.zeros(1, device=device)])
+
+            action = model.get_action(
+                states.to(dtype=torch.float32),
+                actions.to(dtype=torch.float32),
+                rewards.to(dtype=torch.float32),
+                target_return.to(dtype=torch.float32),
+                timesteps.to(dtype=torch.long),
+            )  # get action
+
+            actions[-1] = action
+            action_ = action.detach().cpu().numpy()
+
+            action_ = action_ * np.array([amp, amp, amp, 1])
+            action_ = np.clip(action_, -1.0, 1.0)
+
+            if episode_length <= 1 and action_[-1] <= arm.gripper_thresh:
+                action_[-1] = 1.0
+
+            done, termination_reason = arm.step(action_)  # perform action and get new state
+
+            if done:
+                time.sleep(2)
+                # object_position_ = float(input(f'Target: {x}. Input object position '))
+                object_position_ = optitrack.landing_spot
+                object_position = np.array([object_position_, 0, 0])
+                distance_from_target = calc_dist_from_goal(object_position, arm.target)
+                print(f"Landing Spot: {object_position_}, Error: {distance_from_target}")
+
+                if distance_from_target < arm.target_radius:
+                    reward_ = 1.0  # Reward
+                else:
+                    reward_ = -1.0  # Reward
+
+            else:
+                reward_ = 0.0  # Reward
+
+            rewards[-1] = reward_
+            target_return = torch.cat([target_return, target_return[0, -1].reshape(1, 1)], dim=1)
+            timesteps = torch.cat(
+                [timesteps, torch.ones((1, 1), device=device, dtype=torch.long) * (episode_length + 1)], dim=1)
+            episode_length += 1
+
+            temp_mem.append((state_, action_, reward_, done))
+
+        # DONE
+        agent.generate_her_memory(temp_mem, target=target,
+                                  obj_final_pos=object_position, k=0)
+        temp_mem = []
+        reset_arm()
+        n_episodes += 1
+
+        pickle.dump(agent.memory_k0, open(f"../data/memory_real_"
+                                          f"traj-{n}_"
+                                          f"herK-{agent.k}.pkl", 'wb'))
+
+        print('\n')
 
 
 def reset_arm():
@@ -138,9 +249,9 @@ def reset_arm():
 def confirm(target, angle=0):
     # Confirmation
     confirm = input(f"Distance: {target}, Angle: {angle}\n"
-                    f"confirm (y/n)? ")
-    if confirm != 'y':
-        exit()
+                    f"confirm (Y/n)? ")
+    # if confirm != 'y':
+    #     exit()
 
 
 def calc_dist_from_goal(obj_pos, target):
@@ -155,7 +266,6 @@ def calc_dist_from_goal(obj_pos, target):
 
 
 if __name__ == "__main__":
-
     arm_new = RoboticArm()
 
     hidden_size = 1024
@@ -175,11 +285,13 @@ if __name__ == "__main__":
         attn_pdrop=0.0,
     )
 
-    # checkpoint = torch.load("../weights/dt_trained_best_pid-high.pth", map_location=torch.device('cpu'))
-    checkpoint = torch.load("../weights/dt_trained_simulation_real_cur-best.pth", map_location=torch.device('cpu'))
+    checkpoint = torch.load("../weights/dt_env-sim_model-big_pid-high.pth", map_location=torch.device('cpu'))
+    # checkpoint = torch.load("../weights/dt_env-sim_model-big_pid-low.pth", map_location=torch.device('cpu'))
+    # checkpoint = torch.load("../weights/dt_trained_simulation_real_cur-best.pth", map_location=torch.device('cpu'))
     model.load_state_dict(checkpoint['state_dict'])
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device=device)
 
-    collect_real_data(arm=arm_new, model=model)
+    # collect_real_data(arm=arm_new, model=model)
+    collect_n_real_data(arm=arm_new, model=model)

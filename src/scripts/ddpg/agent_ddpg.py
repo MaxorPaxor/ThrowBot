@@ -47,8 +47,8 @@ class Agent:
         self.update_exploration()
 
         # Learning Params
-        self.LR_actor = 1e-04
-        self.LR_critic = 1e-04  # 1e-04
+        self.LR_actor = 3e-04
+        self.LR_critic = 3e-04  # 1e-04
         self.gamma = 0.95  # discount rate
         self.BATCH_SIZE = 128
         self.num_mini_batches_per_training = 100  # 40

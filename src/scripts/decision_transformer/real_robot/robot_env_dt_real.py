@@ -49,19 +49,48 @@ class RoboticArm:
                                     'joint_5_b', 'joint_6_t', 'finger_joint'])
             self.max_speed = np.array([455, 385, 520, 550, 550, 1000, 1])  # deg/s
 
-        self.max_speed_factor = 1.0  # % of
-        # max speed for safety reasons
-        self.gripper_thresh = 0.82  # Gripper open threshold
+        self.max_speed_factor = 1.0  # % of max speed for safety reasons
+        self.gripper_thresh = 0.82  # Gripper open threshold 0.82
 
         # Connect to gripper
         self.gripper_object = RobotiqGripper("/dev/ttyUSB0", slaveaddress=9)
         # self.gripper_object.reset()
         # self.gripper_object.activate()
+
+        # Original
+        # self.gripper_open_value = 350
+        # self.gripper_close_value = 250
+        # Green ball
+        # self.gripper_open_value = 860
+        # self.gripper_close_value = 830
+        # Green ball - bad grip
+        # self.gripper_open_value = 860
+        # self.gripper_close_value = 720  # 540 - 830
+        # Cylinder
+        # self.gripper_open_value = 650
+        # self.gripper_close_value = 490
+        # Heavy Box
+        self.gripper_open_value = 650
+        self.gripper_close_value = 420
+        # Sack
+        # self.gripper_open_value = 700
+        # self.gripper_close_value = 370  # 60 - 100
+        # Pencil
+        # self.gripper_open_value = 250
+        # self.gripper_close_value = 110
+        # Coil
+        # self.gripper_open_value = 860
+        # self.gripper_close_value = 805
+        # Coil - Bad
+        # self.gripper_open_value = 860
+        # self.gripper_close_value = 675
+
         self.gripper_object._aCoef = -4.7252
         self.gripper_object._bCoef = 1086.8131
         self.gripper_object.closemm = 0
         self.gripper_object.openmm = 860
-        self.gripper_object.goTomm(245, 255, 255)
+        self.gripper_object.goTomm(self.gripper_close_value, 255, 255)
+
         print("Gripper is ready")
 
         # Init connections
@@ -206,7 +235,7 @@ class RoboticArm:
         # self.gripper_object ._bCoef = 1086.8131
         # self.gripper_object .closemm = 0
         # self.gripper_object .openmm = 860
-        self.gripper_object .goTomm(245, 255, 255)
+        self.gripper_object.goTomm(self.gripper_close_value, 255, 255)
 
     def trajectory(self, j1=-1.5707, j2=0.5, j3=-0.3, j4=0.0,
                    j5=-1.5, j6=-0.785398, gripper=-1.0, dt=None):
@@ -369,7 +398,7 @@ class RoboticArm:
         if self.curr_step >= self.number_steps or gripper < self.gripper_thresh:
             # If object is released, wait for it to fall and reward the action
             if gripper < self.gripper_thresh:
-                self.gripper_object.goTomm(350, 255, 255)
+                self.gripper_object.goTomm(self.gripper_open_value, 255, 255)
                 termination_reason = "Gripper was opened with value: {}".format(gripper)
                 done = True  # True
 
