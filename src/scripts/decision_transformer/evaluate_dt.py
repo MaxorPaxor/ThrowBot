@@ -11,6 +11,9 @@ from agent.model_dt.model_dt import DecisionTransformer
 from agent.agent_dt import Agent
 
 
+EVALUATE_WITH_AMP = False
+
+
 def eval_model(arm, model, state_mean=None, state_std=None, print_info=True, target=None, bc=False):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.eval()
@@ -48,6 +51,9 @@ def eval_model(arm, model, state_mean=None, state_std=None, print_info=True, tar
     else:
         target_list = target
 
+    if EVALUATE_WITH_AMP:
+        amp = np.random.uniform(low=1.0, high=3.0)
+
     for x in target_list:
 
         target = np.array([x, 0.0, 0.0])
@@ -79,6 +85,11 @@ def eval_model(arm, model, state_mean=None, state_std=None, print_info=True, tar
             actions[-1] = action
             action = action.detach().cpu().numpy()
 
+            if EVALUATE_WITH_AMP:
+                action = action * np.array([amp, amp, amp, 1])
+                action = np.clip(action, -1.0, 1.0)
+
+            # print(action)
             reward, done, termination_reason, obj_pos, success = arm.step(action)  # perform action and get new state
             rewards[-1] = reward
             target_return = torch.cat([target_return, target_return[0, -1].reshape(1, 1)], dim=1)
@@ -181,8 +192,14 @@ if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device=device)
 
-    target_list = np.arange(0.5, 2.2, 0.2)
-    _, _, hit_rate, _, target_list = eval_model(arm=arm_new, model=model, target=target_list)
+    # dx = 0.05
+    # target_list = np.arange(0.5, 2 + dx, dx)
+    target_list = np.array([1.2])
+
+    errors_list = []
+    for _ in range(1):
+        _, _, hit_rate, errors, _ = eval_model(arm=arm_new, model=model, target=target_list)
+        errors_list.append(errors)
 
     # target_list_hits = []
     # successes = 0
@@ -202,6 +219,6 @@ if __name__ == "__main__":
     # df = pd.DataFrame(target_list_hits)
     # df.to_csv("results/data_hist/target_list_hits.csv")
 
-    # results_cols = target_list
-    # df = pd.DataFrame(errors, columns=results_cols)
-    # df.to_csv(f'results/evaluation_results/eval_random.csv', index=False)
+    results_cols = target_list
+    df = pd.DataFrame(errors_list, columns=results_cols)
+    df.to_csv(f'results/evaluation_results/eval_sim_alpha.csv', index=False)

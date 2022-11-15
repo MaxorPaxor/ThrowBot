@@ -113,6 +113,8 @@ class RoboticArm:
                    j5=-1.5, j6=0.0, gripper=-1.0, dt=None):
         """
         Commands robotic arm joints position
+        j1=0.0, j2=0.5, j3=-0.3, j4=0.0,
+                   j5=-1.5, j6=0.0, gripper=-1.0, dt=None
         """
 
         trajectory = JointTrajectory()
@@ -388,22 +390,16 @@ class RoboticArm:
                 self.wait_for_object_to_touch_ground()
 
                 # Successful throw reward:
-                if self.her:
-                    reward = self.reward_sparse()
-                    distance = self.object_position
-                else:
-                    reward = self.distance_to_reward_shaped()
-                    distance = self.object_position
+                reward = self.reward_sparse()
+                distance = self.object_position
+
                 success = True
 
             else:
                 termination_reason = "Time is up: {}".format(self.curr_time)
-                if self.her:
-                    reward = -1.0
-                    distance = self.object_position
-                else:
-                    reward = self.distance_to_reward_shaped()
-                    distance = self.object_position
+                reward = -1.0
+                distance = self.object_position
+
                 success = False
 
         else:  # Gripper is closed and time is not up
@@ -423,7 +419,88 @@ class RoboticArm:
 
         return reward, done, termination_reason, distance, success
 
+    @staticmethod
+    def ballistic_model(distance):
+        """
+        Analytical Ballistic Model Throw
+        Input: Distance [0.9 - 2.0]
+        Output: Velocity v
+        """
+        release_x = 0.813
+        release_z = 0.349
+        position_x = distance
+        g = 9.81
+
+        v_nom = g * (position_x - release_x)**2 - 2 * release_z
+        v_denom = position_x - release_x
+        v = np.sqrt(v_nom / v_denom)
+
+        return v
+
+    def ballistic_throw(self, distance):
+        """
+        Analytical Ballistic Model Throw
+        Input: Distance [0.9 - 2.0]
+        """
+
+        # Theoretical velocity
+        v = self.ballistic_model(distance)
+
+        # Numerical Mapping between v and dt
+        dt = self.calib_distance(v)
+
+        # Throw
+        traj1 = self.trajectory(j1=0.0, j2=0.5, j3=-0.3, j4=0.0,
+                                j5=-1.5, j6=0.0, gripper=1.0, dt=dt)
+        self.pub_command.publish(traj1)
+        # self.rate.sleep()
+        time.sleep(dt)
+
+        traj2 = self.trajectory(j1=0.0, j2=0.7, j3=0.1, j4=0.0,
+                                j5=-1.2, j6=0.0, gripper=1.0, dt=dt)
+        self.pub_command.publish(traj2)
+        # self.rate.sleep()
+        time.sleep(dt)
+
+        traj3 = self.trajectory(j1=0.0, j2=0.8, j3=0.4, j4=0.0,
+                                j5=-0.9, j6=0.0, gripper=1.0, dt=dt)
+        self.pub_command.publish(traj3)
+        # self.rate.sleep()
+        time.sleep(dt)
+
+        traj4 = self.trajectory(j1=0.0, j2=0.9, j3=0.7, j4=0.0,
+                                j5=-0.586, j6=0.0, gripper=-1.0, dt=dt)
+        self.pub_command.publish(traj4)
+        # self.rate.sleep()
+        time.sleep(dt)
+
+        self.wait_for_object_to_touch_ground()
+        distance = self.object_position[0]
+
+        print(f"Theoretical Velocity: {v}")
+        print(f"dt: {dt}")
+        print(f"Landing Position: {distance}")
+
+    @staticmethod
+    def calib_distance(distance):
+        # Calculate bias
+        # x = np.array([4.55, 3.63, 3.22, 2.86, 2.64, 2.33, 2.19, 1.94, 1.74, 1.66,
+        #               1.52, 1.41, 1.34, 1.29, 1.2, 1.16, 1.14, 1.01, 0.76, 0.58])
+        # y = np.array([0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12, 0.13, 0.14, 0.15,
+        #               0.16, 0.17, 0.18, 0.19, 0.2 , 0.21, 0.22, 0.25, 0.3, 0.4])
+        # z = np.polyfit(x, y, deg=6)
+        # p = np.poly1d(z)
+
+        z = np.array(
+            [1.49932003e-03, - 2.47497656e-02,  1.68395038e-01, - 6.11142425e-01,
+             1.27145297e+00, - 1.50517863e+00,  9.41862115e-01])
+        p = np.poly1d(z)
+        dt = p(distance)
+
+        return dt
+
 
 if __name__ == '__main__':
     robotic_arm = RoboticArm()
+    robotic_arm.ballistic_throw(distance=2.0)
     # robotic_arm.reset()

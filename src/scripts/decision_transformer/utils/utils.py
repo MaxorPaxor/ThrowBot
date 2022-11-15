@@ -218,11 +218,13 @@ def plot_evaluation():
     # Load files
     path = '../results/evaluation_results/'
     eval_results_sim = pd.read_csv(path + 'eval_sim.csv')
+    eval_results_sim_alpha = pd.read_csv(path + 'eval_sim_alpha.csv')
     eval_results_real = pd.read_csv(path + 'evaluation_real/eval_real.csv')
     eval_results_real_pre = pd.read_csv(path + 'evaluation_real/eval_real_pre_not-baysian.csv')
 
-    #
+    # to-cm
     eval_results_sim *= 100
+    eval_results_sim_alpha *= 100
     eval_results_real *= 100
     eval_results_real_pre *= 100
 
@@ -285,8 +287,30 @@ def plot_evaluation():
 
     dy_dt = np.array([y_err_std, y_err_std])
 
+    # DT Sim alpha Error
+    y_dt_alpha = []
+    y_max_dt_alpha = []
+    y_min_dt_alpha = []
+    y_err_top_dt_alpha = []
+    y_err_bot_dt_alpha = []
+    y_err_std_alpha = []
+    for column in eval_results_sim_alpha:
+        column_values = eval_results_sim_alpha[column].values
+        max_dt_alpha = column_values.max()
+        min_dt_alpha = column_values.min()
+        mean_dt_alpha = column_values.mean()
+        err_alpha = column_values.std()
+        y_err_top_dt_alpha.append(mean_dt_alpha - max_dt_alpha)
+        y_err_bot_dt_alpha.append(min_dt_alpha - mean_dt_alpha)
+
+        y_err_std_alpha.append(err_alpha)
+        y_dt_alpha.append(mean_dt_alpha)
+        y_max_dt_alpha.append(max_dt_alpha)
+        y_min_dt_alpha.append(min_dt_alpha)
+
+    dy_dt_alpha = np.array([y_err_std_alpha, y_err_std_alpha])
+
     # Real Error
-    # target_list = np.arange(.5, 2.05, .05)
     target_list = np.arange(50, 205, 5)
     eval_results_real = abs(eval_results_real - target_list)
     real_error = []
@@ -302,7 +326,6 @@ def plot_evaluation():
     real_err_str = np.array([std_error, std_error])
 
     # Real Error Pre fine-tuned
-    # target_list_pre = np.arange(.5, 2.1, .1)
     target_list_pre = np.arange(50, 210, 10)
     eval_results_real_pre = abs(eval_results_real_pre - target_list_pre)
     real_error_pre = []
@@ -325,6 +348,7 @@ def plot_evaluation():
     # error_fig.errorbar(x, real_error, yerr=real_err_str, fmt='tab:red', linewidth=1.5, elinewidth=1.0, capsize=4,
     #                    capthick=1.0, label='Real Throws Error')
 
+    # Smoothen data
     from scipy.signal import savgol_filter
     window_size = 13
     y_sim_1 = y_dt + dy_dt[0]
@@ -332,6 +356,12 @@ def plot_evaluation():
     y_sim_1 = savgol_filter(y_sim_1, window_size, 3)  # window size, polynomial order
     y_sim_2 = savgol_filter(y_sim_2, window_size, 3)  # window size, polynomial order
     y_dt = savgol_filter(y_dt, window_size, 3)
+
+    y_sim_1_alpha = y_dt_alpha + dy_dt_alpha[0]
+    y_sim_2_alpha = y_dt_alpha - dy_dt_alpha[1]
+    y_sim_1_alpha = savgol_filter(y_sim_1_alpha, window_size, 3)  # window size, polynomial order
+    y_sim_2_alpha = savgol_filter(y_sim_2_alpha, window_size, 3)  # window size, polynomial order
+    y_dt_alpha = savgol_filter(y_dt_alpha, window_size, 3)
 
     y_real_1 = real_error + real_err_str[0]
     y_real_2 = real_error - real_err_str[1]
@@ -346,29 +376,35 @@ def plot_evaluation():
     real_error_pre = savgol_filter(real_error_pre, window_size, 3)
 
     error_fig.plot(x, y_dt, color='tab:blue')
+    error_fig.plot(x, y_dt_alpha, color='tab:purple')
     error_fig.plot(x, real_error, color='tab:orange')
     error_fig.plot(x_pre, real_error_pre, color='tab:green')
+
+    # plt.rcParams['text.usetex'] = True
     error_fig.fill_between(x, y_sim_1, y_sim_2, color='tab:blue', linewidth=0.0, label='Simulated robot', alpha=0.5)
+    error_fig.fill_between(x, y_sim_1_alpha, y_sim_2_alpha, color='tab:purple', linewidth=0.0,
+                           label=r'Simulated robot - with $\alpha$ gain', alpha=0.5)
     error_fig.fill_between(x, y_real_1, y_real_2, color='tab:orange', linewidth=0.0, label='Real robot - fine-tuned',
                            alpha=0.6)
     error_fig.fill_between(x_pre, y_real_pre_1, y_real_pre_2, color='tab:green', linewidth=0.0,
                            label='Real robot - no fine-tuning', alpha=0.5)
 
-    plt.xlim([50, 200])
+
     # plt.xlim([.5, 2.0])
     # plt.ylim([1e-1, 2e1])
-    plt.ylim([1e0, 2e2])
+
+    plt.xlim([50, 200])
+    plt.ylim([1e0, 4e2])
 
     print(f"sim ME: {np.array(y_dt).mean()}, real ME {np.array(real_error).mean()} real-pre ME: {np.array(real_error_pre).mean()}")
 
     # Legend
     handles, labels = plt.gca().get_legend_handles_labels()
-    # order = [0, 1]
-    order = [2, 1, 0]
+    order = [2, 3, 0, 1]
     error_fig.legend([handles[idx] for idx in order], [labels[idx] for idx in order], loc='upper left')
 
     # Save
-    plt.savefig('../results/evaluation_results/evaluation_real/eval_real_both.png')
+    plt.savefig('../results/evaluation_results/evaluation_real/eval_real.png')
 
 
 def plot_target_hist():
@@ -539,6 +575,6 @@ def stdout_redirected(to=os.devnull):
 
 if __name__ == '__main__':
     # plot_attempts_and_k()
-    # plot_evaluation()
+    plot_evaluation()
     # plot_target_hist()
-    plot_real_data()
+    # plot_real_data()
