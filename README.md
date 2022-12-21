@@ -1,15 +1,16 @@
 # ThrowBot
-The idea of this work is to introduce a new robust methods to teach industrial arms dynamically complex tasks
-without any prior knowledge of the robot's kinematic or dynamic models, nor any analytical idea of the dynamic task.
 
-We take advantage of the great generalization abilities of the transformer architecture to show how we can teach an
-industrial robotic arm, in a model-free manner, to accurately throw objects to any point within 2 meters radius, 
-with minimal amounts of random data.
+## Learning to Throw With a Handful of Samples Using Decision Transformers
 
-<p align="center">
-<img src="gif/throw_many.gif">
-</p>
-<h5 align="center">Motoman-gp8 throwing into boxes</h5>
+### [Paper](https://ieeexplore.ieee.org/document/9984828?source=authoralert) | [Video](https://www.youtube.com/watch?v=5_G6o_H3HeE)
+
+Throwing objects by a robot extends its reach and has many industrial applications. While analytical models can provide efficient performance, they require accurate estimation of system parameters. Reinforcement Learning (RL) algorithms can provide an accurate throwing policy without prior knowledge. However, they require an extensive amount of real world samples which may be time consuming and, most importantly, pose danger. Training in simulation, on the other hand, would most likely result in poor performance on the real robot. In this letter, we explore the use of Decision Transformers (DT) and their ability to transfer from a simulation-based policy into the real-world. Contrary to RL, we re-frame the problem as sequence modelling and train a DT by supervised learning. The DT is trained off-line on data collected from a far-from-reality simulation through random actions without any prior knowledge on how to throw. Then, the DT is fine-tuned on an handful ( ∼5 ) of real throws. Results on various objects show accurate throws reaching an error of approximately 4 cm. Also, the DT can extrapolate and accurately throw to goals that are out-of-distribution to the training data. We additionally show that few expert throw samples, and no pre-training in simulation, are sufficient for training an accurate policy.
+
+<div align="center">
+
+[![Watch the video](https://i.ytimg.com/an_webp/5_G6o_H3HeE/mqdefault_6s.webp?du=3000&sqp=CJbujJ0G&rs=AOn4CLCGBBBcCWcweyEkgv5F2qji_pzybA)](https://www.youtube.com/watch?v=5_G6o_H3HeE)
+
+</div>
 
 ## Installation
 ### ROS Dependencies
