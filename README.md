@@ -8,7 +8,7 @@ Throwing objects by a robot extends its reach and has many industrial applicatio
 
 <div align="center">
 
-[![Watch the video](https://i.ytimg.com/an_webp/5_G6o_H3HeE/mqdefault_6s.webp?du=3000&sqp=CJbujJ0G&rs=AOn4CLCGBBBcCWcweyEkgv5F2qji_pzybA)](https://www.youtube.com/watch?v=5_G6o_H3HeE)
+[![Watch the video](https://i.ytimg.com/an_webp/5_G6o_H3HeE/mqdefault_6s.webp?du=3000&sqp=COqq1Z0G&rs=AOn4CLCH4lYZjeGwwjH602IGm89Al1IlNg)](https://www.youtube.com/watch?v=5_G6o_H3HeE)
 
 </div>
 
